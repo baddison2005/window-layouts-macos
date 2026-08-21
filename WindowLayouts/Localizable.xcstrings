@@ -1,0 +1,610 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "%@ applied." : {
+
+    },
+    "%@: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@: %2$@"
+          }
+        }
+      }
+    },
+    "%lld logical points" : {
+
+    },
+    "%lld of %lld layouts" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld of %2$lld layouts"
+          }
+        }
+      }
+    },
+    "A custom layout refers to a group that does not exist." : {
+
+    },
+    "A global shortcut is invalid." : {
+
+    },
+    "A global shortcut refers to an action that does not exist." : {
+
+    },
+    "A layout library may contain no more than 20 custom layouts." : {
+
+    },
+    "About" : {
+
+    },
+    "Accessibility" : {
+
+    },
+    "Accessibility access is enabled." : {
+
+    },
+    "Accessibility access is required" : {
+
+    },
+    "Accessibility access is required." : {
+
+    },
+    "Add" : {
+
+    },
+    "Add or select a layout" : {
+
+    },
+    "Apply" : {
+
+    },
+    "Apply to: %@" : {
+
+    },
+    "Approval required" : {
+
+    },
+    "Big" : {
+
+    },
+    "Bottom Half" : {
+
+    },
+    "Bottom Left" : {
+
+    },
+    "Bottom Right" : {
+
+    },
+    "Cancel" : {
+
+    },
+    "Center" : {
+
+    },
+    "Center Third" : {
+
+    },
+    "Center Two Thirds" : {
+
+    },
+    "Check Again" : {
+
+    },
+    "Choose a window in another application first." : {
+
+    },
+    "Choose Record Shortcut, then type a key combination. Use at least one of Command, Option, or Control. Press Delete to clear or Escape to cancel recording." : {
+
+    },
+    "Close" : {
+
+    },
+    "Close Window Layouts panel" : {
+
+    },
+    "Configure Window Layouts…" : {
+
+    },
+    "Control-click or right-click the Dock icon to apply layouts to the last active third-party app. A normal click retains the standard macOS app-activation behavior. The menu-bar item remains available at all times. Changes take effect after Apply." : {
+
+    },
+    "Current status" : {
+
+    },
+    "Custom" : {
+
+    },
+    "Custom group" : {
+
+    },
+    "Custom group identifiers must be unique." : {
+
+    },
+    "Custom groups" : {
+
+    },
+    "Custom layout grid" : {
+
+    },
+    "Custom layout identifiers must be unique." : {
+
+    },
+    "Custom Layouts" : {
+
+    },
+    "Default" : {
+
+    },
+    "Disable Green Button Panel" : {
+
+    },
+    "Disable Optional Overlays" : {
+
+    },
+    "Disabled" : {
+
+    },
+    "Display the top-center strip immediately" : {
+
+    },
+    "Display zone targets immediately" : {
+
+    },
+    "Dock" : {
+
+    },
+    "Down" : {
+
+    },
+    "Drag across the 24 × 12 grid to choose the window’s position and size." : {
+
+    },
+    "Drag targets" : {
+
+    },
+    "Enabled" : {
+
+    },
+    "Every custom group must have a name." : {
+
+    },
+    "Every custom layout must have a name." : {
+
+    },
+    "Extra Big" : {
+
+    },
+    "Failed" : {
+
+    },
+    "Fill Target Display" : {
+
+    },
+    "Filled %lld %@ using %@; %lld unavailable." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Filled %1$lld %2$@ using %3$@; %4$lld unavailable."
+          }
+        }
+      }
+    },
+    "Filled %lld %@ using %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Filled %1$lld %2$@ using %3$@."
+          }
+        }
+      }
+    },
+    "Fixed Layouts" : {
+
+    },
+    "General" : {
+
+    },
+    "Global keyboard shortcut" : {
+
+    },
+    "GPL-3.0-or-later · No third-party dependencies" : {
+
+    },
+    "Grant access in System Settings, then choose Check Again." : {
+
+    },
+    "Grant Accessibility Access…" : {
+
+    },
+    "Green button layout panel" : {
+
+    },
+    "Group name" : {
+
+    },
+    "Groups" : {
+
+    },
+    "Halves" : {
+
+    },
+    "Horizontal Halves" : {
+
+    },
+    "If drag events are not detected on this Mac, allow Window Layouts under System Settings → Privacy & Security → Input Monitoring, then relaunch it. Window Layouts never synthesizes or modifies input events." : {
+
+    },
+    "Launch at login" : {
+
+    },
+    "Launch at login could not be disabled: %@" : {
+
+    },
+    "Launch at login could not be enabled: %@" : {
+
+    },
+    "Layout name" : {
+
+    },
+    "Layout padding" : {
+
+    },
+    "Layout padding must be between 0 and 200 logical points." : {
+
+    },
+    "Layout zone centers" : {
+
+    },
+    "Layouts" : {
+
+    },
+    "Layouts appear under these groups in the Custom menu." : {
+
+    },
+    "Left Half" : {
+
+    },
+    "Left Third" : {
+
+    },
+    "Left Two Thirds" : {
+
+    },
+    "macOS could not find this app as a login item. Run a signed app bundle and try again." : {
+
+    },
+    "macOS could not register this shortcut (error %d)." : {
+
+    },
+    "macOS did not disable the login item." : {
+
+    },
+    "macOS did not enable the login item." : {
+
+    },
+    "macOS limitation" : {
+
+    },
+    "macOS reported that this shortcut is unavailable." : {
+
+    },
+    "macOS requires approval in System Settings > General > Login Items." : {
+
+    },
+    "Make selection narrower" : {
+
+    },
+    "Make selection shorter" : {
+
+    },
+    "Make selection taller" : {
+
+    },
+    "Make selection wider" : {
+
+    },
+    "Maximize" : {
+
+    },
+    "Menu group order" : {
+
+    },
+    "Monitor movement uses public Accessibility and screen APIs. Moving third-party windows between Spaces is unavailable because macOS provides no public API for it." : {
+
+    },
+    "Move Down" : {
+
+    },
+    "Move selection down" : {
+
+    },
+    "Move selection left" : {
+
+    },
+    "Move selection right" : {
+
+    },
+    "Move selection up" : {
+
+    },
+    "Move to Next Monitor" : {
+
+    },
+    "Move to Previous Monitor" : {
+
+    },
+    "Move Up" : {
+
+    },
+    "Name" : {
+
+    },
+    "Native full-screen windows are not supported." : {
+
+    },
+    "Native window layouts for macOS" : {
+
+    },
+    "New group" : {
+
+    },
+    "No application is currently focused." : {
+
+    },
+    "No Custom Layouts" : {
+
+    },
+    "No eligible app" : {
+
+    },
+    "No original frame has been saved for this window." : {
+
+    },
+    "No other display is available." : {
+
+    },
+    "No usable display contains the focused window." : {
+
+    },
+    "Open Login Items Settings…" : {
+
+    },
+    "Open Window Layouts when I log in" : {
+
+    },
+    "Optional overlays are disabled for this session, but the setting could not be saved." : {
+
+    },
+    "Optional overlays are disabled." : {
+
+    },
+    "Overlay safety" : {
+
+    },
+    "Padding is applied only to internal layout edges; display edges remain flush." : {
+
+    },
+    "Panel size" : {
+
+    },
+    "Platform limits" : {
+
+    },
+    "Press to record a global keyboard shortcut." : {
+
+    },
+    "Quarters" : {
+
+    },
+    "Quit Window Layouts" : {
+
+    },
+    "Record Shortcut" : {
+
+    },
+    "Registration failures" : {
+
+    },
+    "Remove" : {
+
+    },
+    "Reorder the built-in and Custom sections in the menu-bar menu." : {
+
+    },
+    "Required" : {
+
+    },
+    "Restore" : {
+
+    },
+    "Retry" : {
+
+    },
+    "Retry Saved Shortcuts" : {
+
+    },
+    "Right Half" : {
+
+    },
+    "Right Third" : {
+
+    },
+    "Right Two Thirds" : {
+
+    },
+    "Saved layouts" : {
+
+    },
+    "Select Add to create one." : {
+
+    },
+    "Settings saved." : {
+
+    },
+    "Shortcut changes take effect after you choose Apply." : {
+
+    },
+    "Shortcut issue" : {
+
+    },
+    "Shortcuts" : {
+
+    },
+    "Shortcuts are registered non-exclusively. Window Layouts prevents duplicates within its own settings, but macOS does not provide a complete public registry of shortcuts used by other apps. If another app uses the same combination, both apps may respond." : {
+
+    },
+    "Show layout targets while dragging a window" : {
+
+    },
+    "Show layouts when hovering over a window’s green button" : {
+
+    },
+    "Show Window Layouts in the Dock" : {
+
+    },
+    "Small" : {
+
+    },
+    "Status" : {
+
+    },
+    "Target placement" : {
+
+    },
+    "Targets and previews are separate, nonactivating panels that always ignore mouse events. Window Layouts observes the pointer and applies a hovered layout only after the drag ends. Changes take effect after Apply." : {
+
+    },
+    "That key cannot be used as a global shortcut." : {
+
+    },
+    "The display could not be filled." : {
+
+    },
+    "The dragged window is no longer available." : {
+
+    },
+    "The dragged window operation could not be completed." : {
+
+    },
+    "The focused application could not complete the window operation." : {
+
+    },
+    "The focused application did not respond in time." : {
+
+    },
+    "The focused application has no eligible window." : {
+
+    },
+    "The focused item is not a standard application window." : {
+
+    },
+    "The focused window cannot be moved and resized through Accessibility." : {
+
+    },
+    "The focused window is minimized." : {
+
+    },
+    "The focused window reported invalid geometry." : {
+
+    },
+    "The green-button panel is compact and accepts input only while visibly open. Every drag-target and preview panel always ignores mouse events. The menu-bar item is always the emergency disable path." : {
+
+    },
+    "The layout library uses an unsupported schema version." : {
+
+    },
+    "The menu group order is incomplete or contains duplicates." : {
+
+    },
+    "The same global shortcut cannot be assigned to more than one action." : {
+
+    },
+    "The saved layout library could not be loaded. Safe defaults are active and the original file was left unchanged." : {
+
+    },
+    "The shortcut contains an unsupported modifier." : {
+
+    },
+    "The shortcut key code is invalid." : {
+
+    },
+    "The shortcut key could not be identified." : {
+
+    },
+    "The target display has no eligible visible windows." : {
+
+    },
+    "The window operation could not be completed." : {
+
+    },
+    "Thirds" : {
+
+    },
+    "This change takes effect after you choose Apply. A build run directly from Xcode may have a temporary location; verify the setting again after installing the signed app in Applications." : {
+
+    },
+    "Top Half" : {
+
+    },
+    "Top Left" : {
+
+    },
+    "Top Right" : {
+
+    },
+    "Top-center strip" : {
+
+    },
+    "Two Thirds" : {
+
+    },
+    "Type shortcut…" : {
+
+    },
+    "Type the shortcut now. Press Escape to cancel or Delete to clear it." : {
+
+    },
+    "Unassigned" : {
+
+    },
+    "Unavailable" : {
+
+    },
+    "Up" : {
+
+    },
+    "Use at least one of Command, Option, or Control." : {
+
+    },
+    "Use the named accessibility actions to move or resize the selected region." : {
+
+    },
+    "Vertical Halves" : {
+
+    },
+    "Window" : {
+
+    },
+    "Window Actions" : {
+
+    },
+    "Window Layouts" : {
+
+    },
+    "Window Layouts uses the public Accessibility position of the green button to show a separate nonactivating panel. It does not modify or replace Apple’s built-in title-bar menu. Changes take effect after Apply." : {
+
+    },
+    "Window Layouts uses the public macOS Accessibility API to find, move, and resize the focused window. It never bypasses macOS privacy controls." : {
+
+    }
+  },
+  "version" : "1.0"
+}
