@@ -96,8 +96,8 @@ xcodebuild test \
 ```
 
 There are no third-party dependencies. Developer ID signing, notarization,
-stapling, packaging, and fresh-user installation are documented in
-[`docs/DISTRIBUTION.md`](docs/DISTRIBUTION.md).
+stapling, repeatable ZIP and DMG packaging, and fresh-user installation are
+documented in [`docs/DISTRIBUTION.md`](docs/DISTRIBUTION.md).
 
 When developing in Xcode, quit any previously running copy before launching a
 new build. Multiple copies can issue competing window movements.

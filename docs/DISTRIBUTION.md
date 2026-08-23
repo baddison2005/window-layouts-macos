@@ -36,16 +36,39 @@ export NOTARYTOOL_PROFILE="window-layouts-notary"
 The script refuses to overwrite an existing artifact. It creates a Release
 archive, verifies its signature, submits a temporary zip to Apple, waits for
 notarization, staples and validates the ticket, runs Gatekeeper assessment, and
-then writes `dist/Window-Layouts-1.0.0-macOS.zip`.
+then writes `dist/Window-Layouts-VERSION-macOS.zip`.
 
-Before publishing, test that exact zip on a fresh macOS account or Mac. Publish
-the GPL-3.0-or-later source corresponding to the binary and retain the
-notarization log with the release records.
+## Create the release disk image
+
+After creating the release zip, use its stapled app to build the DMG:
+
+```bash
+export DEVELOPER_ID_APPLICATION="Developer ID Application: CERTIFICATE NAME (TEAM_ID)"
+export NOTARYTOOL_PROFILE="window-layouts-notary"
+./Scripts/package-dmg.sh
+```
+
+The script verifies the app version, Developer ID signature, notarization
+ticket, Gatekeeper assessment, and universal architectures before packaging. It
+creates an HFS+ compressed disk image containing **Window Layouts.app** and an
+**Applications** shortcut, signs the disk image, submits it to Apple as a second
+notarization request, staples and validates its ticket, and runs a disk-image
+Gatekeeper assessment. The final artifact is written to
+`dist/Window-Layouts-VERSION-macOS.dmg`.
+
+The workflow is reproducible from the corresponding source and release zip.
+Signed artifacts are not expected to be byte-for-byte identical because secure
+timestamps and Apple notarization tickets are unique to each build.
+
+Before publishing, test the exact ZIP and DMG on a fresh macOS account or Mac.
+Publish the GPL-3.0-or-later source corresponding to the binaries and retain the
+notarization logs with the release records.
 
 ## Fresh-user installation
 
-1. Download and expand the notarized zip.
-2. Move **Window Layouts.app** into `/Applications` before launching it.
+1. Download and open the notarized DMG.
+2. Drag **Window Layouts.app** onto the **Applications** shortcut before
+   launching it. The notarized zip can be used as an alternative.
 3. Open Window Layouts. Use its onboarding command to grant access under
    **System Settings → Privacy & Security → Accessibility**.
 4. If drag targets do not receive global drag observations, separately allow
