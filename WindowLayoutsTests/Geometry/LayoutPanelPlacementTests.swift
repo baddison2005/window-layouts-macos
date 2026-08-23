@@ -8,7 +8,7 @@ import Testing
 struct LayoutPanelPlacementTests {
     private let screen = CGRect(x: 0, y: 0, width: 1_440, height: 900)
 
-    @Test func opensBelowTheGreenButtonWhenSpaceAllows() throws {
+    @Test func opensBelowAndExtendsLeftOfTheGreenButtonWhenSpaceAllows() throws {
         let placement = try #require(LayoutPanelPlacementEngine.placement(
             beside: CGRect(x: 60, y: 16, width: 14, height: 14),
             requestedSize: CGSize(width: 310, height: 500),
@@ -17,7 +17,18 @@ struct LayoutPanelPlacementTests {
 
         #expect(placement.verticalSide == .below)
         #expect(placement.horizontalAlignment == .leading)
-        #expect(placement.frame == CGRect(x: 60, y: 38, width: 310, height: 500))
+        #expect(placement.frame == CGRect(x: 32, y: 38, width: 310, height: 500))
+    }
+
+    @Test func leftOverlapRemainsInsideTheUsableFrame() throws {
+        let placement = try #require(LayoutPanelPlacementEngine.placement(
+            beside: CGRect(x: 16, y: 16, width: 14, height: 14),
+            requestedSize: CGSize(width: 310, height: 500),
+            in: screen
+        ))
+
+        #expect(placement.horizontalAlignment == .leading)
+        #expect(placement.frame.minX == screen.minX + LayoutPanelPlacementEngine.edgeGap)
     }
 
     @Test func switchesEdgesAndNeverLeavesUsableFrame() throws {

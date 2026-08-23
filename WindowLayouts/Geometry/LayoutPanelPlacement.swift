@@ -22,6 +22,7 @@ nonisolated struct LayoutPanelPlacement: Equatable, Sendable {
 nonisolated enum LayoutPanelPlacementEngine {
     static let edgeGap: CGFloat = 8
     static let maximumUsableFrameFraction: CGFloat = 0.9
+    static let greenButtonMenuCoverOffset: CGFloat = 28
 
     /// All inputs and output use Accessibility's top-left global coordinates.
     static func placement(
@@ -52,7 +53,10 @@ nonisolated enum LayoutPanelPlacementEngine {
         let minimumX = usableFrame.minX + gap
         let maximumX = usableFrame.maxX - gap - size.width
 
-        let leadingX = anchor.minX
+        // Extend across the traffic-light cluster instead of beginning at the
+        // green button. At popup-menu level this gives the compact, opaque
+        // panel enough overlap to cover Apple's menu when both are present.
+        let leadingX = anchor.minX - greenButtonMenuCoverOffset
         let trailingX = anchor.maxX - size.width
         let horizontalAlignment: LayoutPanelHorizontalAlignment
         let x: CGFloat
