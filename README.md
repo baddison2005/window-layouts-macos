@@ -1,7 +1,9 @@
 # Window Layouts for macOS
 
-Window Layouts is a native macOS menu-bar utility for moving and resizing the
-focused application window. The implementation contains the Phase 0 geometry core,
+### Your Workspace Organized the Way You Want It!
+
+Window Layouts is a native macOS menu-bar utility for moving and resizing
+application windows. The implementation contains the Phase 0 geometry core,
 the Phase 1 focused-window controller, Phase 2 custom-layout settings, Phase 3
 global shortcuts and launch-at-login controls, the Phase 4 optional green-button
 layout panel, Phase 5 input-transparent drag targets, and Phase 6 release
@@ -15,7 +17,7 @@ hardening.
 - Display actions: Move to Previous Monitor and Move to Next Monitor. They
   preserve a recognized fixed or custom layout, or proportional free-form
   geometry.
-- Up to 20 named custom layouts on the Fedora/KDE 24 × 12 selection grid.
+- Up to 20 named custom layouts on a 24 × 12 selection grid.
 - Named, reorderable custom groups and independently reorderable menu sections.
 - Edge-aware padding from 0 through 200 logical points.
 - Apply/Cancel Settings editing backed by one canonical in-process store.
