@@ -119,6 +119,8 @@ final class GreenButtonPanelController: ObservableObject {
             lastInteraction = Date()
             if panel?.isVisible != true {
                 showPanel(for: target)
+            } else {
+                panel?.maintainFrontmostPosition()
             }
         } else if panel?.isVisible == true,
                   Date().timeIntervalSince(lastInteraction) >= Self.dismissalDelay {
@@ -215,9 +217,13 @@ final class SafeLayoutPanel: NSPanel {
             backing: .buffered,
             defer: false
         )
-        level = .floating
         collectionBehavior = [.canJoinAllSpaces, .transient, .ignoresCycle]
         isFloatingPanel = true
+        // Set this after isFloatingPanel because AppKit otherwise restores the
+        // floating level. Match the public level reserved for popup menus so
+        // the compact, visible Window Layouts surface has menu-level stacking
+        // priority without using a private or arbitrary window level.
+        level = .popUpMenu
         hidesOnDeactivate = false
         isMovable = false
         isOpaque = true
@@ -241,6 +247,11 @@ final class SafeLayoutPanel: NSPanel {
         orderFrontRegardless()
         // Input begins only after the complete rectangular content is visible.
         ignoresMouseEvents = false
+    }
+
+    func maintainFrontmostPosition() {
+        guard isVisible else { return }
+        orderFrontRegardless()
     }
 
     func conceal() {

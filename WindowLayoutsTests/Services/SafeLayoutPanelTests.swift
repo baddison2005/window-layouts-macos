@@ -14,6 +14,7 @@ struct SafeLayoutPanelTests {
         #expect(panel.ignoresMouseEvents)
         #expect(panel.styleMask.contains(.nonactivatingPanel))
         #expect(panel.frame.size == CGSize(width: 310, height: 500))
+        #expect(panel.level == .popUpMenu)
         #expect(!panel.canBecomeKey)
         #expect(!panel.canBecomeMain)
     }
