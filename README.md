@@ -39,6 +39,24 @@ It has no third-party dependencies, telemetry, or analytics.
 - Input Monitoring permission may be needed for optional drag targets on some
   macOS installations.
 
+## Installation
+
+Window Layouts does not require Xcode. To install the signed and notarized app:
+
+1. Download the latest `Window-Layouts-VERSION-macOS.dmg` from
+   [GitHub Releases](https://github.com/baddison2005/window-layouts-macos/releases/latest).
+2. Open the DMG and drag **Window Layouts.app** onto the **Applications**
+   shortcut.
+3. Eject the Window Layouts disk image, then open **Window Layouts** from the
+   Applications folder.
+4. Follow the onboarding prompt to grant Accessibility access in **System
+   Settings → Privacy & Security → Accessibility**.
+
+The notarized ZIP in each release is an alternative for users who prefer it:
+expand the ZIP, move **Window Layouts.app** into `/Applications`, and launch it
+from there. When upgrading, quit the installed app before replacing it. Window
+Layouts never asks users to bypass Gatekeeper or disable macOS security.
+
 Window Layouts does not use private APIs or attempt to bypass macOS privacy
 controls. Grant access only through the app's onboarding prompt or in **System
 Settings → Privacy & Security → Accessibility**.
