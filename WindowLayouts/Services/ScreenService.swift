@@ -48,6 +48,29 @@ enum ScreenService {
 }
 
 nonisolated enum ScreenGeometryResolver {
+    static func allowsGreenButtonPanel(
+        for windowFrame: CGRect,
+        on screen: ScreenSnapshot,
+        tolerance: CGFloat = 2
+    ) -> Bool {
+        guard isLikelyNativeFullScreen(
+            windowFrame,
+            among: [screen],
+            tolerance: tolerance
+        ) else { return true }
+
+        // A display with no reserved menu-bar or Dock area has identical
+        // physical and usable frames. Public AX geometry therefore cannot
+        // distinguish a normally maximized window from native full screen.
+        // Keep the maximized window eligible; the observer still requires a
+        // standard, movable AX window with a real, nonzero green button.
+        return LayoutEngine.approximatelyEqual(
+            windowFrame,
+            screen.visibleFrame,
+            tolerance: tolerance
+        )
+    }
+
     static func isLikelyNativeFullScreen(
         _ windowFrame: CGRect,
         among screens: [ScreenSnapshot],

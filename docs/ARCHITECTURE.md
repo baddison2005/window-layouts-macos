@@ -65,10 +65,12 @@ KWin/QML code.
   discovery for the focused third-party window and its full-screen/zoom button.
   It uses the same `NSWorkspace.frontmostApplication` fallback as command
   dispatch when the system-wide AX focused-application attribute is absent.
-  A normal window maximized to `NSScreen.visibleFrame` remains eligible; only a
-  window matching a complete physical screen frame is conservatively treated as
-  likely native full screen when the public SDK provides no supported state
-  attribute.
+  A normal window maximized to `NSScreen.visibleFrame` remains eligible. A
+  full-display frame is rejected when the display has reserved menu-bar or Dock
+  space. On an edge-to-edge external display, public geometry cannot distinguish
+  that frame from a normally maximized window, so the panel additionally relies
+  on the existing standard/movable-window checks and a real, nonzero AX green
+  button before it can be triggered.
   `ActiveWindowObserver` combines focused-window AX notifications, workspace
   activation/display notifications, and a low-frequency enabled-only fallback
   refresh. It publishes geometry only; it never changes another app's UI.

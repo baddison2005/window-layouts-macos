@@ -130,6 +130,30 @@ struct ScreenGeometryResolverTests {
         ))
     }
 
+    @Test func greenButtonPanelAllowsMaximizedWindowOnEdgeToEdgeDisplay() {
+        let edgeToEdge = ScreenSnapshot(
+            id: "external",
+            frame: CGRect(x: 1_440, y: 0, width: 2_560, height: 1_440),
+            visibleFrame: CGRect(x: 1_440, y: 0, width: 2_560, height: 1_440)
+        )
+
+        #expect(ScreenGeometryResolver.allowsGreenButtonPanel(
+            for: edgeToEdge.visibleFrame,
+            on: edgeToEdge
+        ))
+    }
+
+    @Test func greenButtonPanelRejectsFullDisplayFrameWhenUsableFrameIsSmaller() {
+        #expect(!ScreenGeometryResolver.allowsGreenButtonPanel(
+            for: screens[1].frame,
+            on: screens[1]
+        ))
+        #expect(ScreenGeometryResolver.allowsGreenButtonPanel(
+            for: screens[1].visibleFrame,
+            on: screens[1]
+        ))
+    }
+
     @Test func monitorOrderUsesAccessibilityCoordinatesAndWraps() {
         let belowPrimary = ScreenSnapshot(
             id: "below",

@@ -79,9 +79,9 @@ actor ActiveWindowSnapshotService {
                   containing: windowFrame,
                   among: screens
               ),
-              !ScreenGeometryResolver.isLikelyNativeFullScreen(
-                  windowFrame,
-                  among: [screen]
+              ScreenGeometryResolver.allowsGreenButtonPanel(
+                  for: windowFrame,
+                  on: screen
               ),
               let greenButton = elementAttribute(
                   kAXFullScreenButtonAttribute as CFString,
