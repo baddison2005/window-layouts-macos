@@ -28,6 +28,8 @@ It has no third-party dependencies, telemetry, or analytics.
   modifying the title bar or replacing Apple's window controls.
 - Enable optional input-transparent drag targets with live layout previews.
 - Launch automatically at login using the public Service Management API.
+- Check the public GitHub repository for stable updates and securely install a
+  newer signed and notarized release from the About tab.
 - Save the layout library safely in Application Support, with automatic
   fallback to defaults if the saved file becomes unreadable.
 
@@ -52,7 +54,10 @@ Window Layouts does not require Xcode. To install the signed and notarized app:
 4. Follow the onboarding prompt to grant Accessibility access in **System
    Settings → Privacy & Security → Accessibility**.
 
-The notarized ZIP in each release is an alternative for users who prefer it:
+After installation, choose **Configure Window Layouts… → About → Check for
+Updates** to check GitHub and securely install newer releases. Update checks
+occur only when requested. The notarized ZIP in each release is also available
+for users who prefer manual installation:
 expand the ZIP, move **Window Layouts.app** into `/Applications`, and launch it
 from there. When upgrading, quit the installed app before replacing it. Window
 Layouts never asks users to bypass Gatekeeper or disable macOS security.

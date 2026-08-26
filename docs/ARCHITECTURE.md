@@ -61,6 +61,18 @@ KWin/QML code.
   `SMAppService.mainApp`. Enabled, disabled, approval-required, unavailable, and
   recoverable failure states remain explicit and are tested with a fake system
   client.
+- `GitHubAppUpdateService` checks GitHub's unauthenticated latest stable release
+  endpoint only when requested from About. It accepts a strict numeric release
+  tag and the exact repository ZIP asset path, enforces a 50 MB limit, and
+  requires GitHub's SHA-256 digest. `AppUpdateInstaller` verifies that digest,
+  the expected bundle identifier and version, all signed architectures, the
+  Developer ID team requirement, nested code, strict bundle structure, and a
+  Gatekeeper assessment before staging an update. Automatic replacement is
+  limited to the canonical `/Applications/Window Layouts.app`; Xcode and other
+  noninstalled builds open the release page instead. The existing app is moved
+  to a private cache backup, restored on any installation or relaunch failure,
+  and removed only after the verified new instance launches. No executable code
+  is fetched from anywhere other than the project's public GitHub release.
 - `ActiveWindowSnapshotService` performs short-timeout, defensive public AX
   discovery for the focused third-party window and its full-screen/zoom button.
   It uses the same `NSWorkspace.frontmostApplication` fallback as command
@@ -124,8 +136,10 @@ KWin/QML code.
   wrapping only when there are more windows than layouts. No window is assigned
   to or moved between Spaces.
 - `MenuBarExtra`, the SwiftUI Settings scene, and the optional compact panel are
-  the UI surfaces in the current phase. The Settings editor draws a 24 × 12
-  `Canvas` inside its normal application window; it is not an overlay.
+  the UI surfaces in the current phase. About displays bundle-derived version
+  metadata, authorship, the canonical repository link, and explicit update
+  controls. The Settings editor draws a 24 × 12 `Canvas` inside its normal
+  application window; it is not an overlay.
 - `Localizable.xcstrings` is the English source catalog for SwiftUI, AppKit,
   validation, and status text. Icon-only controls have explicit VoiceOver
   labels, and the custom-layout grid exposes named move and resize actions.

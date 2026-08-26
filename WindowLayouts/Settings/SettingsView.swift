@@ -9,6 +9,7 @@ struct SettingsView: View {
     @ObservedObject var shortcutManager: GlobalShortcutManager
     @ObservedObject var launchAtLoginManager: LaunchAtLoginManager
     @StateObject private var draft: SettingsDraft
+    @StateObject private var updateController = AppUpdateController()
     @State private var statusMessage: String?
     @Environment(\.dismiss) private var dismiss
 
@@ -63,7 +64,7 @@ struct SettingsView: View {
                     Label("General", systemImage: "gearshape")
                 }
 
-                AboutSettingsView()
+                AboutSettingsView(updateController: updateController)
                     .tabItem {
                         Label("About", systemImage: "info.circle")
                     }
@@ -112,26 +113,5 @@ struct SettingsView: View {
         } catch {
             statusMessage = error.localizedDescription
         }
-    }
-}
-
-private struct AboutSettingsView: View {
-    var body: some View {
-        VStack(spacing: 12) {
-            Image("MenuBarIcon")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 72, height: 72)
-                .accessibilityHidden(true)
-            Text("Window Layouts")
-                .font(.title2.bold())
-            Text("Native window layouts for macOS")
-                .foregroundStyle(.secondary)
-            Text("GPL-3.0-or-later · No third-party dependencies")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding()
     }
 }

@@ -590,6 +590,117 @@
     "Vertical Halves" : {
 
     },
+    "%@ (Build %@)" : {
+
+    },
+    "Author" : {
+
+    },
+    "Automatic installation is available only when Window Layouts is running from Applications." : {
+
+    },
+    "Cancel" : {
+
+    },
+    "Check for Updates" : {
+
+    },
+    "Check GitHub for a newer stable release of Window Layouts." : {
+
+    },
+    "Checking for updates…" : {
+
+    },
+    "Download and Install" : {
+
+    },
+    "Download, Install, and Relaunch" : {
+
+    },
+    "Downloading Window Layouts %@…" : {
+
+    },
+    "Dr. Brett Addison" : {
+
+    },
+    "GitHub Repository" : {
+
+    },
+    "GitHub returned an invalid update response." : {
+
+    },
+    "GPL-3.0-or-later" : {
+
+    },
+    "Install Window Layouts %@?" : {
+
+    },
+    "License" : {
+
+    },
+    "No third-party dependencies" : {
+
+    },
+    "Release Notes" : {
+
+    },
+    "Software Update" : {
+
+    },
+    "Source code" : {
+
+    },
+    "The downloaded application has unexpected identity or version information." : {
+
+    },
+    "The downloaded application was not signed by the Window Layouts developer identity." : {
+
+    },
+    "The downloaded update could not be extracted." : {
+
+    },
+    "The downloaded update did not match GitHub’s SHA-256 digest." : {
+
+    },
+    "The installed version could not be identified." : {
+
+    },
+    "The latest GitHub release has an invalid version." : {
+
+    },
+    "The latest release does not contain the expected macOS application archive." : {
+
+    },
+    "The update could not be downloaded." : {
+
+    },
+    "The update could not be installed. The existing application was preserved." : {
+
+    },
+    "The update does not include a verifiable SHA-256 digest." : {
+
+    },
+    "The update download address is not trusted." : {
+
+    },
+    "The update is larger than the permitted download size." : {
+
+    },
+    "The update was installed but could not be relaunched." : {
+
+    },
+    "Update checks contact only the public Window Layouts GitHub repository. Automatic installation verifies the release SHA-256 digest, application identity, Developer ID signature, and Gatekeeper assessment before replacing the installed app." : {
+
+    },
+    "Verifying and installing Window Layouts %@…" : {
+
+    },
+    "Version" : {
+
+    },
+    "View Release" : {
+
+    },
     "Window" : {
 
     },
@@ -599,10 +710,25 @@
     "Window Layouts" : {
 
     },
+    "Window Layouts %@ is available." : {
+
+    },
+    "Window Layouts %@ is up to date." : {
+
+    },
+    "Window Layouts is a native macOS utility for easily creating and applying custom layouts to application windows." : {
+
+    },
+    "Window Layouts will verify the download, replace the copy in Applications, and relaunch. Your layouts and shortcuts will be preserved." : {
+
+    },
     "Window Layouts uses the public Accessibility position of the green button to show a separate nonactivating panel. It does not modify or replace Apple’s built-in title-bar menu. Changes take effect after Apply." : {
 
     },
     "Window Layouts uses the public macOS Accessibility API to find, move, and resize the focused window. It never bypasses macOS privacy controls." : {
+
+    },
+    "Your Workspace, Organized Your Way!" : {
 
     }
   },

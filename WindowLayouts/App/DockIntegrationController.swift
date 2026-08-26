@@ -382,6 +382,10 @@ final class WindowLayoutsAppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         Self.dockIntegrationController?.applicationDidFinishLaunching()
+        Task {
+            try? await Task.sleep(for: .seconds(3))
+            AppUpdateInstaller.cleanPendingBackup()
+        }
     }
 
     func applicationDockMenu(_ sender: NSApplication) -> NSMenu? {
