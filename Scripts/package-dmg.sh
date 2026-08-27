@@ -9,6 +9,8 @@ PROJECT_ROOT=${SCRIPT_DIRECTORY:h}
 PROJECT_PATH="$PROJECT_ROOT/WindowLayouts.xcodeproj"
 SCHEME="WindowLayouts"
 OUTPUT_DIRECTORY="$PROJECT_ROOT/dist"
+APP_NAME="Window Layouts Experimental"
+ARTIFACT_PREFIX="Window-Layouts-Experimental"
 
 : "${DEVELOPER_ID_APPLICATION:?Set DEVELOPER_ID_APPLICATION to the full Developer ID Application identity.}"
 : "${NOTARYTOOL_PROFILE:?Set NOTARYTOOL_PROFILE to a notarytool Keychain profile.}"
@@ -21,8 +23,8 @@ VERSION=$(xcodebuild \
 
 [[ -n "$VERSION" ]] || { print -u2 "Could not read MARKETING_VERSION."; exit 1; }
 
-SOURCE_ZIP=${1:-"$OUTPUT_DIRECTORY/Window-Layouts-$VERSION-macOS.zip"}
-OUTPUT_DMG="$OUTPUT_DIRECTORY/Window-Layouts-$VERSION-macOS.dmg"
+SOURCE_ZIP=${1:-"$OUTPUT_DIRECTORY/$ARTIFACT_PREFIX-$VERSION-macOS.zip"}
+OUTPUT_DMG="$OUTPUT_DIRECTORY/$ARTIFACT_PREFIX-$VERSION-macOS.dmg"
 
 [[ -f "$SOURCE_ZIP" ]] || { print -u2 "Release zip not found: $SOURCE_ZIP"; exit 1; }
 [[ ! -e "$OUTPUT_DMG" ]] || {
@@ -35,12 +37,12 @@ trap 'rm -rf "$WORK_DIRECTORY"' EXIT
 
 EXTRACT_DIRECTORY="$WORK_DIRECTORY/extracted"
 STAGING_DIRECTORY="$WORK_DIRECTORY/staging"
-DMG_PATH="$WORK_DIRECTORY/Window-Layouts-$VERSION-macOS.dmg"
+DMG_PATH="$WORK_DIRECTORY/$ARTIFACT_PREFIX-$VERSION-macOS.dmg"
 mkdir -p "$EXTRACT_DIRECTORY" "$STAGING_DIRECTORY"
 
 ditto -x -k "$SOURCE_ZIP" "$EXTRACT_DIRECTORY"
-APP_PATH="$EXTRACT_DIRECTORY/Window Layouts.app"
-[[ -d "$APP_PATH" ]] || { print -u2 "Release zip did not contain Window Layouts.app."; exit 1; }
+APP_PATH="$EXTRACT_DIRECTORY/$APP_NAME.app"
+[[ -d "$APP_PATH" ]] || { print -u2 "Release zip did not contain $APP_NAME.app."; exit 1; }
 
 APP_VERSION=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP_PATH/Contents/Info.plist")
 [[ "$APP_VERSION" == "$VERSION" ]] || {
@@ -52,20 +54,20 @@ codesign --verify --deep --strict --verbose=2 "$APP_PATH"
 xcrun stapler validate "$APP_PATH"
 spctl --assess --type execute --verbose=2 "$APP_PATH"
 
-EXECUTABLE="$APP_PATH/Contents/MacOS/Window Layouts"
+EXECUTABLE="$APP_PATH/Contents/MacOS/$APP_NAME"
 ARCHITECTURES=$(lipo -archs "$EXECUTABLE")
 [[ " $ARCHITECTURES " == *" arm64 "* && " $ARCHITECTURES " == *" x86_64 "* ]] || {
   print -u2 "Expected a universal arm64 and x86_64 app; found: $ARCHITECTURES"
   exit 1
 }
 
-ditto "$APP_PATH" "$STAGING_DIRECTORY/Window Layouts.app"
+ditto "$APP_PATH" "$STAGING_DIRECTORY/$APP_NAME.app"
 ln -s /Applications "$STAGING_DIRECTORY/Applications"
 
 hdiutil create \
   -quiet \
   -fs HFS+ \
-  -volname "Window Layouts" \
+  -volname "$APP_NAME" \
   -srcfolder "$STAGING_DIRECTORY" \
   -format UDZO \
   -imagekey zlib-level=9 \

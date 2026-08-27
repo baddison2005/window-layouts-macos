@@ -6,6 +6,7 @@ import ApplicationServices
 import Carbon.HIToolbox
 import CoreGraphics
 import Foundation
+import OSLog
 
 nonisolated enum SpaceMovementDirection: String, CaseIterable, Identifiable, Sendable {
     case previous
@@ -72,7 +73,10 @@ nonisolated enum SpaceMovementError: Error, Equatable, LocalizedError, Sendable 
         case .invalidWindowGeometry:
             String(localized: "The focused window reported invalid geometry.")
         case .noSafeTitleBarPoint:
-            String(localized: "No unobstructed, noninteractive title-bar point was available for the experimental gesture.")
+            String(
+                localized:
+                    "No unobstructed, noninteractive title-bar point was available for the experimental gesture."
+            )
         case .targetTimedOut:
             String(localized: "The focused application did not respond in time.")
         case .eventCreationFailed:
@@ -116,111 +120,124 @@ struct SpaceMovementSystemClient {
     var post: (SpaceMovementSyntheticEvent) throws -> Void
     var pause: (Duration) async throws -> Void
 
-    static let live = SpaceMovementSystemClient(
-        hasAccessibilityAccess: {
-            AXIsProcessTrusted()
-        },
-        hasPostEventAccess: {
-            CGPreflightPostEventAccess()
-        },
-        requestPostEventAccess: {
-            CGRequestPostEventAccess()
-        },
-        inputState: {
-            let flags = CGEventSource.flagsState(.combinedSessionState)
-            let primaryModifiers: CGEventFlags = [
-                .maskCommand,
-                .maskAlternate,
-                .maskControl,
-                .maskShift,
-            ]
-            return SpaceMovementInputState(
-                primaryModifierIsDown: !flags.intersection(primaryModifiers).isEmpty,
-                mouseButtonIsDown: CGEventSource.buttonState(
-                    .combinedSessionState,
-                    button: .left
-                ) || CGEventSource.buttonState(
-                    .combinedSessionState,
-                    button: .right
-                ) || CGEventSource.buttonState(
-                    .combinedSessionState,
-                    button: .center
+    static let live: SpaceMovementSystemClient = {
+        // Reuse one event source so the mouse hold and keyboard shortcut are
+        // represented as one synthetic input sequence.
+        let eventSource = CGEventSource(stateID: .combinedSessionState)
+        return SpaceMovementSystemClient(
+            hasAccessibilityAccess: {
+                AXIsProcessTrusted()
+            },
+            hasPostEventAccess: {
+                CGPreflightPostEventAccess()
+            },
+            requestPostEventAccess: {
+                CGRequestPostEventAccess()
+            },
+            inputState: {
+                let flags = CGEventSource.flagsState(.combinedSessionState)
+                let primaryModifiers: CGEventFlags = [
+                    .maskCommand,
+                    .maskAlternate,
+                    .maskControl,
+                    .maskShift,
+                ]
+                return SpaceMovementInputState(
+                    primaryModifierIsDown: !flags.intersection(primaryModifiers).isEmpty,
+                    mouseButtonIsDown: CGEventSource.buttonState(
+                        .combinedSessionState,
+                        button: .left
+                    )
+                        || CGEventSource.buttonState(
+                            .combinedSessionState,
+                            button: .right
+                        )
+                        || CGEventSource.buttonState(
+                            .combinedSessionState,
+                            button: .center
+                        )
                 )
-            )
-        },
-        pointerLocation: {
-            CGEvent(source: nil)?.location
-        },
-        eventNumber: {
-            Int64(DispatchTime.now().uptimeNanoseconds & 0x7fff_ffff)
-        },
-        resolveTarget: { processIdentifier in
-            try SpaceMovementAXTargetResolver.resolve(
-                processIdentifier: processIdentifier
-            )
-        },
-        post: { descriptor in
-            let source = CGEventSource(stateID: .combinedSessionState)
-            let event: CGEvent?
-            switch descriptor {
-            case .mouseMoved(let point):
-                event = CGEvent(
-                    mouseEventSource: source,
-                    mouseType: .mouseMoved,
-                    mouseCursorPosition: point,
-                    mouseButton: .left
+            },
+            pointerLocation: {
+                CGEvent(source: nil)?.location
+            },
+            eventNumber: {
+                Int64(DispatchTime.now().uptimeNanoseconds & 0x7fff_ffff)
+            },
+            resolveTarget: { processIdentifier in
+                try SpaceMovementAXTargetResolver.resolve(
+                    processIdentifier: processIdentifier
                 )
-            case .leftMouseDown(let point, let eventNumber):
-                event = CGEvent(
-                    mouseEventSource: source,
-                    mouseType: .leftMouseDown,
-                    mouseCursorPosition: point,
-                    mouseButton: .left
-                )
-                event?.setIntegerValueField(
-                    .mouseEventNumber,
-                    value: eventNumber
-                )
-                event?.setIntegerValueField(.mouseEventClickState, value: 1)
-                event?.setDoubleValueField(.mouseEventPressure, value: 1)
-            case .leftMouseUp(let point, let eventNumber):
-                event = CGEvent(
-                    mouseEventSource: source,
-                    mouseType: .leftMouseUp,
-                    mouseCursorPosition: point,
-                    mouseButton: .left
-                )
-                event?.setIntegerValueField(
-                    .mouseEventNumber,
-                    value: eventNumber
-                )
-                event?.setIntegerValueField(.mouseEventClickState, value: 1)
-                event?.setDoubleValueField(.mouseEventPressure, value: 0)
-            case .keyDown(let code, let control):
-                event = CGEvent(
-                    keyboardEventSource: source,
-                    virtualKey: code,
-                    keyDown: true
-                )
-                event?.flags = control ? [.maskControl] : []
-            case .keyUp(let code, let control):
-                event = CGEvent(
-                    keyboardEventSource: source,
-                    virtualKey: code,
-                    keyDown: false
-                )
-                event?.flags = control ? [.maskControl] : []
-            }
+            },
+            post: { descriptor in
+                guard let eventSource else {
+                    throw SpaceMovementError.eventCreationFailed
+                }
+                let event: CGEvent?
+                switch descriptor {
+                case .mouseMoved(let point):
+                    event = CGEvent(
+                        mouseEventSource: eventSource,
+                        mouseType: .mouseMoved,
+                        mouseCursorPosition: point,
+                        mouseButton: .left
+                    )
+                case .leftMouseDown(let point, let eventNumber):
+                    event = CGEvent(
+                        mouseEventSource: eventSource,
+                        mouseType: .leftMouseDown,
+                        mouseCursorPosition: point,
+                        mouseButton: .left
+                    )
+                    event?.setIntegerValueField(
+                        .mouseEventNumber,
+                        value: eventNumber
+                    )
+                    event?.setIntegerValueField(.mouseEventClickState, value: 1)
+                    event?.setDoubleValueField(.mouseEventPressure, value: 1)
+                case .leftMouseUp(let point, let eventNumber):
+                    event = CGEvent(
+                        mouseEventSource: eventSource,
+                        mouseType: .leftMouseUp,
+                        mouseCursorPosition: point,
+                        mouseButton: .left
+                    )
+                    event?.setIntegerValueField(
+                        .mouseEventNumber,
+                        value: eventNumber
+                    )
+                    event?.setIntegerValueField(.mouseEventClickState, value: 1)
+                    event?.setDoubleValueField(.mouseEventPressure, value: 0)
+                case .keyDown(let code, let control):
+                    event = CGEvent(
+                        keyboardEventSource: eventSource,
+                        virtualKey: code,
+                        keyDown: true
+                    )
+                    event?.flags = control
+                        ? [.maskControl, .maskNumericPad, .maskSecondaryFn]
+                        : [.maskNumericPad, .maskSecondaryFn]
+                case .keyUp(let code, let control):
+                    event = CGEvent(
+                        keyboardEventSource: eventSource,
+                        virtualKey: code,
+                        keyDown: false
+                    )
+                    event?.flags = control
+                        ? [.maskControl, .maskNumericPad, .maskSecondaryFn]
+                        : [.maskNumericPad, .maskSecondaryFn]
+                }
 
-            guard let event else {
-                throw SpaceMovementError.eventCreationFailed
+                guard let event else {
+                    throw SpaceMovementError.eventCreationFailed
+                }
+                event.post(tap: .cghidEventTap)
+            },
+            pause: { duration in
+                try await Task.sleep(for: duration)
             }
-            event.post(tap: .cghidEventTap)
-        },
-        pause: { duration in
-            try await Task.sleep(for: duration)
-        }
-    )
+        )
+    }()
 }
 
 @MainActor
@@ -229,7 +246,6 @@ final class SpaceMovementService {
     private static let neutralInputPollDelay = Duration.milliseconds(50)
     private static let pointerSettleDelay = Duration.milliseconds(40)
     private static let mouseHoldDelay = Duration.milliseconds(120)
-    private static let keyStepDelay = Duration.milliseconds(35)
     private static let arrowHoldDelay = Duration.milliseconds(90)
     private static let spaceTransitionDelay = Duration.milliseconds(420)
 
@@ -270,11 +286,9 @@ final class SpaceMovementService {
         }
 
         let eventNumber = client.eventNumber()
-        let controlKey = CGKeyCode(kVK_Control)
         let arrowKey = direction.arrowKeyCode
         var pointerWasMoved = false
         var mouseIsDown = false
-        var controlIsDown = false
         var arrowIsDown = false
 
         do {
@@ -282,16 +296,13 @@ final class SpaceMovementService {
             pointerWasMoved = true
             try await client.pause(Self.pointerSettleDelay)
 
-            try client.post(.leftMouseDown(
-                point: target.dragPoint,
-                eventNumber: eventNumber
-            ))
+            try client.post(
+                .leftMouseDown(
+                    point: target.dragPoint,
+                    eventNumber: eventNumber
+                ))
             mouseIsDown = true
             try await client.pause(Self.mouseHoldDelay)
-
-            try client.post(.keyDown(code: controlKey, control: true))
-            controlIsDown = true
-            try await client.pause(Self.keyStepDelay)
 
             try client.post(.keyDown(code: arrowKey, control: true))
             arrowIsDown = true
@@ -299,33 +310,32 @@ final class SpaceMovementService {
 
             try client.post(.keyUp(code: arrowKey, control: true))
             arrowIsDown = false
-            try await client.pause(Self.keyStepDelay)
-
-            try client.post(.keyUp(code: controlKey, control: false))
-            controlIsDown = false
             try await client.pause(Self.spaceTransitionDelay)
 
-            try client.post(.leftMouseUp(
-                point: target.dragPoint,
-                eventNumber: eventNumber
-            ))
+            try client.post(
+                .leftMouseUp(
+                    point: target.dragPoint,
+                    eventNumber: eventNumber
+                ))
             mouseIsDown = false
             try await client.pause(Self.pointerSettleDelay)
 
             try client.post(.mouseMoved(point: originalPointer))
             pointerWasMoved = false
+
+            AppDiagnostics.windowOperations.debug(
+                "Experimental Space gesture posted direction=\(direction.rawValue, privacy: .public) pid=\(target.processIdentifier, privacy: .public)"
+            )
         } catch {
             if arrowIsDown {
                 try? client.post(.keyUp(code: arrowKey, control: true))
             }
-            if controlIsDown {
-                try? client.post(.keyUp(code: controlKey, control: false))
-            }
             if mouseIsDown {
-                try? client.post(.leftMouseUp(
-                    point: target.dragPoint,
-                    eventNumber: eventNumber
-                ))
+                try? client.post(
+                    .leftMouseUp(
+                        point: target.dragPoint,
+                        eventNumber: eventNumber
+                    ))
             }
             if pointerWasMoved {
                 try? client.post(.mouseMoved(point: originalPointer))
@@ -345,6 +355,7 @@ final class SpaceMovementService {
         }
         throw SpaceMovementError.inputStillActive
     }
+
 }
 
 private enum SpaceMovementAXTargetResolver {
@@ -365,13 +376,36 @@ private enum SpaceMovementAXTargetResolver {
         kAXDisclosureTriangleRole as String,
         kAXScrollBarRole as String,
         kAXIncrementorRole as String,
+        "AXTab",
+        "AXMenuItem",
     ]
 
-    static func resolve(processIdentifier explicitProcessIdentifier: pid_t?) throws -> SpaceMovementTarget {
+    static func resolve(processIdentifier explicitProcessIdentifier: pid_t?) throws
+        -> SpaceMovementTarget
+    {
+        var stage = "permission"
+        do {
+            return try resolve(
+                processIdentifier: explicitProcessIdentifier,
+                stage: &stage
+            )
+        } catch {
+            AppDiagnostics.windowOperations.error(
+                "Experimental Space target resolution failed stage=\(stage, privacy: .public) error=\(String(describing: error), privacy: .public)"
+            )
+            throw error
+        }
+    }
+
+    private static func resolve(
+        processIdentifier explicitProcessIdentifier: pid_t?,
+        stage: inout String
+    ) throws -> SpaceMovementTarget {
         guard AXIsProcessTrusted() else {
             throw SpaceMovementError.accessibilityPermissionRequired
         }
 
+        stage = "focusedApplication"
         let systemWide = AXUIElementCreateSystemWide()
         _ = AXUIElementSetMessagingTimeout(systemWide, messagingTimeout)
         let processIdentifier = try resolvedProcessIdentifier(
@@ -382,49 +416,99 @@ private enum SpaceMovementAXTargetResolver {
             throw SpaceMovementError.ownApplicationFocused
         }
 
+        stage = "focusedWindow"
         let application = AXUIElementCreateApplication(processIdentifier)
         try check(
             AXUIElementSetMessagingTimeout(application, messagingTimeout)
         )
         let window = try focusedOrMainWindow(of: application)
         try check(AXUIElementSetMessagingTimeout(window, messagingTimeout))
+
+        stage = "windowEligibility"
         try validate(window)
 
+        stage = "windowGeometry"
         let windowFrame = try frame(of: window)
         guard windowFrame.width >= minimumWindowWidth else {
             throw SpaceMovementError.unsupportedWindow
         }
-        if ScreenGeometryResolver.isLikelyNativeFullScreen(
-            windowFrame,
-            among: ScreenService.snapshots()
-        ) {
-            throw SpaceMovementError.fullScreenWindow
-        }
 
-        let controlFrames = try titleBarControlFrames(of: window)
-        let titleBarY = controlFrames.isEmpty
+        stage = "titleBarControls"
+        let closeButtonFrame = titleBarControlFrame(
+            kAXCloseButtonAttribute,
+            of: window
+        )
+        let controlFrames = titleBarControlFrames(of: window)
+        let controlCenterY =
+            controlFrames.isEmpty
             ? windowFrame.minY + titleBarFallbackOffset
             : controlFrames.map(\.midY).reduce(0, +) / CGFloat(controlFrames.count)
+        let controlAdjacentXs = controlFrames.map(\.maxX).max().map { rightEdge in
+            [5, 8, 11, 14].map { rightEdge + CGFloat($0) }
+        } ?? []
         let inset = max(44, min(96, windowFrame.width * 0.12))
-        let candidateXs = [
-            windowFrame.midX,
-            windowFrame.minX + windowFrame.width * 0.62,
-            windowFrame.minX + windowFrame.width * 0.38,
-            windowFrame.minX + inset,
-            windowFrame.maxX - inset,
-        ]
+        let generalCandidateXs =
+            [0.5, 0.62, 0.38, 0.74, 0.26, 0.86, 0.14, 0.68, 0.32, 0.80, 0.20]
+            .map { windowFrame.minX + windowFrame.width * $0 }
+            + [windowFrame.minX + inset, windowFrame.maxX - inset]
+        let bundleIdentifier = NSRunningApplication(
+            processIdentifier: processIdentifier
+        )?.bundleIdentifier
+        let usesDenseBrowserTabStrip = bundleIdentifier.map(
+            isDenseBrowserBundleIdentifier
+        ) ?? false
+        let candidateYs = uniqueCoordinates([
+            controlCenterY,
+            windowFrame.minY + 10,
+            windowFrame.minY + 16,
+            windowFrame.minY + 22,
+            windowFrame.minY + 28,
+        ])
+        let controlAdjacentPoints = candidateYs.flatMap { y in
+            controlAdjacentXs.map { CGPoint(x: $0, y: y) }
+        }
+        let closeButtonCornerPoint = closeButtonFrame.map { frame in
+            CGPoint(x: frame.minX - 3, y: frame.maxY + 3)
+        }
+        let closeButtonCornerPoints: [CGPoint] = closeButtonCornerPoint.map { [$0] } ?? []
+        let closeButtonFallbackPoints: [CGPoint]
+        if let frame = closeButtonFrame {
+            let xs = [5, 8, 11].map { frame.minX - CGFloat($0) }
+            let ys = uniqueCoordinates(
+                [controlCenterY]
+                    + [6, 10, 14, 18].map { frame.maxY + CGFloat($0) }
+            )
+            closeButtonFallbackPoints = ys.flatMap { y in
+                xs.map { CGPoint(x: $0, y: y) }
+            }
+        } else {
+            closeButtonFallbackPoints = []
+        }
+        let generalCandidatePoints = candidateYs.flatMap { y in
+            generalCandidateXs.map { CGPoint(x: $0, y: y) }
+        }
+        let candidatePoints = controlAdjacentPoints
+            + closeButtonCornerPoints
+            + closeButtonFallbackPoints
+            + (usesDenseBrowserTabStrip ? [] : generalCandidatePoints)
 
-        for x in candidateXs {
-            let point = CGPoint(x: x, y: titleBarY)
+        stage = "safeTitleBarPoint"
+        for point in candidatePoints {
+            let isExactCloseButtonCorner = closeButtonCornerPoint == point
+            let isClearOfControls = isExactCloseButtonCorner
+                ? !controlFrames.contains(where: { $0.contains(point) })
+                : isClearOfTitleBarControls(point, controlFrames: controlFrames)
             guard windowFrame.insetBy(dx: 8, dy: 0).contains(point),
-                  !controlFrames.contains(where: {
-                      $0.insetBy(dx: -12, dy: -8).contains(point)
-                  }),
-                  try pointIsSafe(
-                      point,
-                      in: window,
-                      systemWide: systemWide
-                  ) else { continue }
+                isClearOfControls,
+                try pointIsSafe(
+                    point,
+                    in: window,
+                    systemWide: systemWide
+                )
+            else { continue }
+            AppDiagnostics.windowOperations.debug(
+                "Experimental Space target resolved pid=\(processIdentifier, privacy: .public) point=(\(point.x, privacy: .public), \(point.y, privacy: .public))"
+            )
             return SpaceMovementTarget(
                 processIdentifier: processIdentifier,
                 windowFrame: windowFrame,
@@ -432,6 +516,29 @@ private enum SpaceMovementAXTargetResolver {
             )
         }
         throw SpaceMovementError.noSafeTitleBarPoint
+    }
+
+    nonisolated private static func isDenseBrowserBundleIdentifier(
+        _ identifier: String
+    ) -> Bool {
+        let normalized = identifier.lowercased()
+        return normalized.hasPrefix("com.google.chrome")
+            || normalized.hasPrefix("org.mozilla.firefox")
+            || normalized.hasPrefix("com.operasoftware.opera")
+    }
+
+    nonisolated private static func isClearOfTitleBarControls(
+        _ point: CGPoint,
+        controlFrames: [CGRect]
+    ) -> Bool {
+        !controlFrames.contains { frame in
+            frame.insetBy(dx: -3, dy: -5).contains(point)
+        }
+    }
+
+    nonisolated private static func uniqueCoordinates(_ values: [CGFloat]) -> [CGFloat] {
+        var seen: Set<Int> = []
+        return values.filter { seen.insert(Int($0.rounded())).inserted }
     }
 
     private static func resolvedProcessIdentifier(
@@ -449,8 +556,9 @@ private enum SpaceMovementAXTargetResolver {
             &value
         )
         if focusedError == .success,
-           let value,
-           CFGetTypeID(value) == AXUIElementGetTypeID() {
+            let value,
+            CFGetTypeID(value) == AXUIElementGetTypeID()
+        {
             let application = unsafeBitCast(value, to: AXUIElement.self)
             var processIdentifier: pid_t = 0
             try check(AXUIElementGetPid(application, &processIdentifier))
@@ -458,14 +566,17 @@ private enum SpaceMovementAXTargetResolver {
                 return processIdentifier
             }
         } else if focusedError != .noValue,
-                  focusedError != .attributeUnsupported {
+            focusedError != .attributeUnsupported
+        {
             try check(focusedError)
         }
 
-        guard let processIdentifier = NSWorkspace.shared
-            .frontmostApplication?
-            .processIdentifier,
-              processIdentifier > 0 else {
+        guard
+            let processIdentifier = NSWorkspace.shared
+                .frontmostApplication?
+                .processIdentifier,
+            processIdentifier > 0
+        else {
             throw SpaceMovementError.noFocusedApplication
         }
         return processIdentifier
@@ -490,8 +601,10 @@ private enum SpaceMovementAXTargetResolver {
     }
 
     private static func validate(_ window: AXUIElement) throws {
-        guard try stringAttribute(kAXRoleAttribute as CFString, of: window)
-                == (kAXWindowRole as String) else {
+        guard
+            try stringAttribute(kAXRoleAttribute as CFString, of: window)
+                == (kAXWindowRole as String)
+        else {
             throw SpaceMovementError.unsupportedWindow
         }
         if let subrole = try optionalStringAttribute(
@@ -508,11 +621,12 @@ private enum SpaceMovementAXTargetResolver {
         }
 
         var settable = DarwinBoolean(false)
-        try check(AXUIElementIsAttributeSettable(
-            window,
-            kAXPositionAttribute as CFString,
-            &settable
-        ))
+        try check(
+            AXUIElementIsAttributeSettable(
+                window,
+                kAXPositionAttribute as CFString,
+                &settable
+            ))
         guard settable.boolValue else {
             throw SpaceMovementError.unsupportedWindow
         }
@@ -520,18 +634,25 @@ private enum SpaceMovementAXTargetResolver {
 
     private static func titleBarControlFrames(
         of window: AXUIElement
-    ) throws -> [CGRect] {
-        try [
+    ) -> [CGRect] {
+        [
             kAXCloseButtonAttribute,
             kAXMinimizeButtonAttribute,
             kAXZoomButtonAttribute,
-        ].compactMap { attribute in
-            guard let button = try optionalElementAttribute(
+        ].compactMap { titleBarControlFrame($0, of: window) }
+    }
+
+    private static func titleBarControlFrame(
+        _ attribute: String,
+        of window: AXUIElement
+    ) -> CGRect? {
+        guard
+            let button = try? optionalElementAttribute(
                 attribute as CFString,
                 of: window
-            ) else { return nil }
-            return try? frame(of: button)
-        }
+            )
+        else { return nil }
+        return try? frame(of: button)
     }
 
     private static func pointIsSafe(
@@ -549,27 +670,89 @@ private enum SpaceMovementAXTargetResolver {
         if error == .noValue || error == .attributeUnsupported {
             return false
         }
-        try check(error)
+        if error == .apiDisabled {
+            throw SpaceMovementError.accessibilityPermissionRequired
+        }
+        guard error == .success else {
+            return false
+        }
         guard let hitElement else { return false }
 
-        let belongsToWindow: Bool
-        if CFEqual(hitElement, window) {
-            belongsToWindow = true
-        } else if let topLevel = try optionalElementAttribute(
-            kAXTopLevelUIElementAttribute as CFString,
-            of: hitElement
-        ) {
-            belongsToWindow = CFEqual(topLevel, window)
-        } else {
-            belongsToWindow = false
-        }
-        guard belongsToWindow else { return false }
+        var current = hitElement
+        for _ in 0..<12 {
+            if CFEqual(current, window) {
+                return true
+            }
 
-        let role = try optionalStringAttribute(
-            kAXRoleAttribute as CFString,
-            of: hitElement
-        )
-        return role.map { !interactiveRoles.contains($0) } ?? false
+            guard
+                let role = try bestEffortStringAttribute(
+                    kAXRoleAttribute as CFString,
+                    of: current
+                ), !interactiveRoles.contains(role),
+                let actions = try bestEffortActionNames(of: current),
+                !actions.contains(kAXPressAction as String)
+            else {
+                return false
+            }
+
+            guard
+                let parent = try bestEffortElementAttribute(
+                    kAXParentAttribute as CFString,
+                    of: current
+                ), !CFEqual(parent, current)
+            else {
+                return false
+            }
+            current = parent
+        }
+        return false
+    }
+
+    private static func bestEffortElementAttribute(
+        _ attribute: CFString,
+        of element: AXUIElement
+    ) throws -> AXUIElement? {
+        var value: CFTypeRef?
+        let error = AXUIElementCopyAttributeValue(element, attribute, &value)
+        if error == .apiDisabled {
+            throw SpaceMovementError.accessibilityPermissionRequired
+        }
+        guard error == .success,
+            let value,
+            CFGetTypeID(value) == AXUIElementGetTypeID()
+        else {
+            return nil
+        }
+        return unsafeBitCast(value, to: AXUIElement.self)
+    }
+
+    private static func bestEffortStringAttribute(
+        _ attribute: CFString,
+        of element: AXUIElement
+    ) throws -> String? {
+        var value: CFTypeRef?
+        let error = AXUIElementCopyAttributeValue(element, attribute, &value)
+        if error == .apiDisabled {
+            throw SpaceMovementError.accessibilityPermissionRequired
+        }
+        guard error == .success else { return nil }
+        return value as? String
+    }
+
+    private static func bestEffortActionNames(
+        of element: AXUIElement
+    ) throws -> Set<String>? {
+        var names: CFArray?
+        let error = AXUIElementCopyActionNames(element, &names)
+        if error == .apiDisabled {
+            throw SpaceMovementError.accessibilityPermissionRequired
+        }
+        guard error == .success,
+            let names = names as? [String]
+        else {
+            return nil
+        }
+        return Set(names)
     }
 
     private static func frame(of element: AXUIElement) throws -> CGRect {
@@ -584,13 +767,14 @@ private enum SpaceMovementAXTargetResolver {
         var position = CGPoint.zero
         var size = CGSize.zero
         guard AXValueGetType(positionValue) == .cgPoint,
-              AXValueGetValue(positionValue, .cgPoint, &position),
-              AXValueGetType(sizeValue) == .cgSize,
-              AXValueGetValue(sizeValue, .cgSize, &size),
-              [position.x, position.y, size.width, size.height]
+            AXValueGetValue(positionValue, .cgPoint, &position),
+            AXValueGetType(sizeValue) == .cgSize,
+            AXValueGetValue(sizeValue, .cgSize, &size),
+            [position.x, position.y, size.width, size.height]
                 .allSatisfy(\.isFinite),
-              size.width > 0,
-              size.height > 0 else {
+            size.width > 0,
+            size.height > 0
+        else {
             throw SpaceMovementError.invalidWindowGeometry
         }
         return CGRect(origin: position, size: size)
@@ -607,7 +791,8 @@ private enum SpaceMovementAXTargetResolver {
         }
         try check(error)
         guard let value,
-              CFGetTypeID(value) == AXUIElementGetTypeID() else {
+            CFGetTypeID(value) == AXUIElementGetTypeID()
+        else {
             return nil
         }
         return unsafeBitCast(value, to: AXUIElement.self)
@@ -656,7 +841,8 @@ private enum SpaceMovementAXTargetResolver {
         var value: CFTypeRef?
         try check(AXUIElementCopyAttributeValue(element, attribute, &value))
         guard let value,
-              CFGetTypeID(value) == AXValueGetTypeID() else {
+            CFGetTypeID(value) == AXValueGetTypeID()
+        else {
             throw SpaceMovementError.invalidWindowGeometry
         }
         return unsafeBitCast(value, to: AXValue.self)

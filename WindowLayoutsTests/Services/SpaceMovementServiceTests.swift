@@ -4,6 +4,7 @@
 import Carbon.HIToolbox
 import CoreGraphics
 import Testing
+
 @testable import WindowLayouts
 
 @MainActor
@@ -14,16 +15,15 @@ struct SpaceMovementServiceTests {
 
         try await service.moveWindow(.next)
 
-        #expect(fixture.events == [
-            .mouseMoved(point: fixture.target.dragPoint),
-            .leftMouseDown(point: fixture.target.dragPoint, eventNumber: 42),
-            .keyDown(code: CGKeyCode(kVK_Control), control: true),
-            .keyDown(code: CGKeyCode(kVK_RightArrow), control: true),
-            .keyUp(code: CGKeyCode(kVK_RightArrow), control: true),
-            .keyUp(code: CGKeyCode(kVK_Control), control: false),
-            .leftMouseUp(point: fixture.target.dragPoint, eventNumber: 42),
-            .mouseMoved(point: fixture.originalPointer),
-        ])
+        #expect(
+            fixture.events == [
+                .mouseMoved(point: fixture.target.dragPoint),
+                .leftMouseDown(point: fixture.target.dragPoint, eventNumber: 42),
+                .keyDown(code: CGKeyCode(kVK_RightArrow), control: true),
+                .keyUp(code: CGKeyCode(kVK_RightArrow), control: true),
+                .leftMouseUp(point: fixture.target.dragPoint, eventNumber: 42),
+                .mouseMoved(point: fixture.originalPointer),
+            ])
         #expect(fixture.resolvedProcessIdentifiers == [nil])
     }
 
@@ -49,9 +49,10 @@ struct SpaceMovementServiceTests {
 
         #expect(fixture.inputStateReadCount == 3)
         #expect(fixture.resolvedProcessIdentifiers == [1234])
-        #expect(fixture.events.contains(
-            .keyDown(code: CGKeyCode(kVK_LeftArrow), control: true)
-        ))
+        #expect(
+            fixture.events.contains(
+                .keyDown(code: CGKeyCode(kVK_LeftArrow), control: true)
+            ))
     }
 
     @Test func refusesToPostWithoutBothPrivacyPermissions() async {
@@ -95,19 +96,19 @@ struct SpaceMovementServiceTests {
 
     @Test func releasesSyntheticInputAndRestoresPointerAfterFailure() async {
         let fixture = Fixture()
-        fixture.failingPostIndex = 4
+        fixture.failingPostIndex = 3
         let service = SpaceMovementService(client: fixture.client())
 
         await #expect(throws: Fixture.Failure.post) {
             try await service.moveWindow(.next)
         }
 
-        #expect(fixture.events.suffix(4) == [
-            .keyUp(code: CGKeyCode(kVK_RightArrow), control: true),
-            .keyUp(code: CGKeyCode(kVK_Control), control: false),
-            .leftMouseUp(point: fixture.target.dragPoint, eventNumber: 42),
-            .mouseMoved(point: fixture.originalPointer),
-        ])
+        #expect(
+            fixture.events.suffix(3) == [
+                .keyUp(code: CGKeyCode(kVK_RightArrow), control: true),
+                .leftMouseUp(point: fixture.target.dragPoint, eventNumber: 42),
+                .mouseMoved(point: fixture.originalPointer),
+            ])
     }
 }
 

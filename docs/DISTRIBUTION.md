@@ -1,6 +1,6 @@
 # Public distribution
 
-Window Layouts uses Developer ID distribution outside the Mac App Store. App
+Window Layouts Experimental uses Developer ID distribution outside the Mac App Store. App
 Sandbox remains disabled because the application is an Accessibility client
 that moves third-party windows. Release builds enable Hardened Runtime and use
 only public macOS APIs.
@@ -36,7 +36,7 @@ export NOTARYTOOL_PROFILE="window-layouts-notary"
 The script refuses to overwrite an existing artifact. It creates a Release
 archive, verifies its signature, submits a temporary zip to Apple, waits for
 notarization, staples and validates the ticket, runs Gatekeeper assessment, and
-then writes `dist/Window-Layouts-VERSION-macOS.zip`.
+then writes `dist/Window-Layouts-Experimental-VERSION-macOS.zip`.
 
 ## Create the release disk image
 
@@ -50,11 +50,11 @@ export NOTARYTOOL_PROFILE="window-layouts-notary"
 
 The script verifies the app version, Developer ID signature, notarization
 ticket, Gatekeeper assessment, and universal architectures before packaging. It
-creates an HFS+ compressed disk image containing **Window Layouts.app** and an
+creates an HFS+ compressed disk image containing **Window Layouts Experimental.app** and an
 **Applications** shortcut, signs the disk image, submits it to Apple as a second
 notarization request, staples and validates its ticket, and runs a disk-image
 Gatekeeper assessment. The final artifact is written to
-`dist/Window-Layouts-VERSION-macOS.dmg`.
+`dist/Window-Layouts-Experimental-VERSION-macOS.dmg`.
 
 The workflow is reproducible from the corresponding source and release zip.
 Signed artifacts are not expected to be byte-for-byte identical because secure
@@ -67,16 +67,16 @@ notarization logs with the release records.
 ## Fresh-user installation
 
 1. Download and open the notarized DMG.
-2. Drag **Window Layouts.app** onto the **Applications** shortcut before
+2. Drag **Window Layouts Experimental.app** onto the **Applications** shortcut before
    launching it. The notarized zip can be used as an alternative.
-3. Open Window Layouts. Use its onboarding command to grant access under
+3. Open Window Layouts Experimental. Use its onboarding command to grant access under
    **System Settings → Privacy & Security → Accessibility**.
 4. If drag targets do not receive global drag observations, separately allow
-   Window Layouts under **Input Monitoring**, then relaunch it.
+   Window Layouts Experimental under **Input Monitoring**, then relaunch it.
 5. Configure layouts and optional features from the menu-bar icon. Enable
    launch at login only after the app is installed in `/Applications`.
 
-Window Layouts never asks users to bypass Gatekeeper or macOS privacy controls.
+Window Layouts Experimental never asks users to bypass Gatekeeper or macOS privacy controls.
 Updating should preserve the bundle identifier, Developer ID team, and install
 path so Accessibility approval remains stable. Quit the old version before
 replacing it to avoid two copies issuing window commands.
@@ -84,12 +84,12 @@ replacing it to avoid two copies issuing window commands.
 ## Diagnostics
 
 Window Layouts emits unified logs under the
-`com.astrobrett.WindowLayouts` subsystem with `WindowOperations`, `Overlays`,
+`com.astrobrett.WindowLayouts.Experimental` subsystem with `WindowOperations`, `Overlays`,
 `Persistence`, and `Lifecycle` categories:
 
 ```bash
 log stream --style compact --level debug \
-  --predicate 'subsystem == "com.astrobrett.WindowLayouts"'
+  --predicate 'subsystem == "com.astrobrett.WindowLayouts.Experimental"'
 ```
 
 Action names, process identifiers, window geometry, and error details are

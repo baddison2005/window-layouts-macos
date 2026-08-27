@@ -27,4 +27,19 @@ struct MenuBarIconTests {
             ) != nil
         )
     }
+
+    @Test func greenPanelSpaceSymbolsExist() {
+        #expect(
+            NSImage(
+                systemSymbolName: "arrow.left.square",
+                accessibilityDescription: nil
+            ) != nil
+        )
+        #expect(
+            NSImage(
+                systemSymbolName: "arrow.right.square",
+                accessibilityDescription: nil
+            ) != nil
+        )
+    }
 }

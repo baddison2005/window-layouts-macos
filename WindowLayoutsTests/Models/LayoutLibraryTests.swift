@@ -47,6 +47,89 @@ struct LayoutLibraryTests {
         #expect(try JSONDecoder().decode(LayoutLibrary.self, from: data).validated() == original)
     }
 
+    @Test func customLayoutArchiveRoundTripsAndPreservesIdentifiers() throws {
+        let group = LayoutGroup(name: "Writing")
+        let layout = LayoutDefinition(
+            name: "Notes",
+            normalizedRect: half,
+            groupID: group.id
+        )
+        let archive = CustomLayoutArchive(
+            customLayouts: [layout],
+            customGroups: [group]
+        )
+
+        let data = try JSONEncoder().encode(archive)
+        let decoded = try JSONDecoder().decode(CustomLayoutArchive.self, from: data)
+
+        #expect(decoded == archive)
+        #expect(decoded.customLayouts[0].id == layout.id)
+        #expect(decoded.customGroups[0].id == group.id)
+    }
+
+    @Test func importingCustomLayoutArchivePreservesOtherSettingsAndValidShortcuts() throws {
+        let oldLayout = LayoutDefinition(name: "Old", normalizedRect: half)
+        let importedGroup = LayoutGroup(name: "Imported")
+        let importedLayout = LayoutDefinition(
+            name: "Imported Half",
+            normalizedRect: half,
+            groupID: importedGroup.id
+        )
+        let fixedShortcut = KeyboardShortcut(
+            keyCode: 0,
+            modifiers: [.command],
+            keyLabel: "A"
+        )
+        let staleShortcut = KeyboardShortcut(
+            keyCode: 1,
+            modifiers: [.command],
+            keyLabel: "S"
+        )
+        let importedShortcut = KeyboardShortcut(
+            keyCode: 2,
+            modifiers: [.command],
+            keyLabel: "D"
+        )
+        let original = LayoutLibrary(
+            customLayouts: [oldLayout],
+            layoutPadding: 14,
+            shortcuts: [
+                "fixed.leftHalf": fixedShortcut,
+                oldLayout.shortcutActionID.rawValue: staleShortcut,
+                importedLayout.shortcutActionID.rawValue: importedShortcut,
+            ],
+            showDockIcon: true,
+            experimentalSpaceMovementEnabled: true
+        )
+        let archive = CustomLayoutArchive(
+            customLayouts: [importedLayout],
+            customGroups: [importedGroup]
+        )
+
+        let imported = try archive.applying(to: original)
+
+        #expect(imported.customLayouts == [importedLayout])
+        #expect(imported.customGroups == [importedGroup])
+        #expect(imported.layoutPadding == 14)
+        #expect(imported.showDockIcon)
+        #expect(imported.experimentalSpaceMovementEnabled)
+        #expect(imported.shortcuts["fixed.leftHalf"] == fixedShortcut)
+        #expect(imported.shortcuts[oldLayout.shortcutActionID.rawValue] == nil)
+        #expect(imported.shortcuts[importedLayout.shortcutActionID.rawValue] == importedShortcut)
+    }
+
+    @Test func customLayoutArchiveRejectsUnsupportedSchema() {
+        let archive = CustomLayoutArchive(
+            schemaVersion: 99,
+            customLayouts: [],
+            customGroups: []
+        )
+
+        #expect(throws: LayoutLibraryValidationError.unsupportedSchemaVersion(99)) {
+            try archive.applying(to: LayoutLibrary())
+        }
+    }
+
     @Test func validationCanonicalizesNamesAndPadding() throws {
         let library = LayoutLibrary(
             customLayouts: [LayoutDefinition(name: "  Focus  ", normalizedRect: half)],

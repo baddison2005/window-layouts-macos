@@ -3,9 +3,9 @@
 ### Your Workspace, Organized Your Way!
 
 > [!CAUTION]
-> This branch is an unsupported, opt-in prototype for moving a window between
-> macOS Spaces. It is deliberately separate from the signed Window Layouts
-> release and is not distributed as an official update.
+> This prerelease contains an unsupported, opt-in prototype for moving a window
+> between macOS Spaces. It has a separate app identity and settings library and
+> will not replace or update the stable Window Layouts app.
 
 Window Layouts Experimental is a native macOS utility for arranging application
 windows. It includes the stable layout, display-transfer, fill-display,
@@ -16,6 +16,21 @@ next Space.
 The app uses SwiftUI, AppKit, the public Accessibility API, and public Quartz
 event APIs. It has no third-party dependencies, telemetry, or analytics. It does
 not use private Spaces APIs or bypass macOS privacy controls.
+
+## Install the experimental prerelease
+
+Download either artifact from the GitHub prerelease:
+
+- **DMG:** open it and drag **Window Layouts Experimental.app** to Applications.
+- **ZIP:** extract it and move **Window Layouts Experimental.app** to Applications.
+
+The app and DMG are signed with Developer ID and notarized by Apple. Launch the
+copy in Applications, then grant **Window Layouts Experimental** Accessibility
+and Input Monitoring access when prompted. Quit the stable app while testing so
+the two editions do not compete for the same shortcuts or window events.
+
+The minimum supported version is macOS 14.6. Both Apple silicon and Intel Macs
+are included in the universal application.
 
 ## Isolation from the released app
 
@@ -42,14 +57,26 @@ The prototype:
 - requires explicit opt-in and confirmation of the Mission Control shortcuts;
 - requires macOS Accessibility and input-event posting permission;
 - waits until real mouse buttons and modifier keys have been released;
-- rejects minimized, native full-screen, nonstandard, immovable, obscured, or
-  unsafe target windows;
+- rejects minimized, nonstandard, immovable, obscured, or unsafe target windows;
 - releases every synthetic key and mouse button after success or failure; and
 - restores the pointer to its original location.
 
 There is no public way to verify which Space contains a third-party window, so
 the app can report only that the gesture was requested. Behavior can vary by app
-and may stop working after a macOS update.
+and may stop working after a macOS update. Some applications expose incomplete
+or misleading title-bar Accessibility information. Space movement may therefore
+fail, activate an unexpected title-bar control, or produce other unexpected
+behavior. Adobe Acrobat is a known example where a safe draggable point may not
+be available. Native full-screen windows are not supported.
+
+## Portable custom layouts
+
+Settings → Layouts includes **Export…** and **Import…** controls for moving
+custom layouts and groups between Macs or restoring them after reinstalling
+macOS. The JSON archive preserves layout and group identifiers. Importing edits
+only the current Settings draft and does not save anything until **Apply** is
+clicked. Preferences and unrelated shortcuts are preserved; shortcuts referring
+to custom items absent from the imported archive are removed.
 
 ## Build and configure
 
@@ -89,8 +116,8 @@ screen-sized overlay windows cannot accept input. The menu-bar item remains the
 emergency path for disabling optional overlays.
 
 The App Sandbox is disabled because controlling other applications through the
-Accessibility API is central to the prototype. A local development build should
-not be treated as a notarized release.
+Accessibility API is central to the prototype. Only artifacts attached to the
+GitHub prerelease should be treated as signed and notarized distribution builds.
 
 ## Stable and Fedora/KDE editions
 

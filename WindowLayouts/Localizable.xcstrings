@@ -4,6 +4,19 @@
     "%@ applied." : {
 
     },
+    "%@ requested." : {
+
+    },
+    "%@-experimental (Build %@)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@-experimental (Build %2$@)"
+          }
+        }
+      }
+    },
     "%@: %@" : {
       "localizations" : {
         "en" : {
@@ -69,6 +82,12 @@
     "Approval required" : {
 
     },
+    "Author" : {
+
+    },
+    "Automatic installation is available only when Window Layouts is running from Applications." : {
+
+    },
     "Big" : {
 
     },
@@ -93,7 +112,13 @@
     "Center Two Thirds" : {
 
     },
+    "Changes take effect after you choose Apply." : {
+
+    },
     "Check Again" : {
+
+    },
+    "Choose a shortcut other than Control–Left Arrow or Control–Right Arrow. Those combinations must remain available to Mission Control; your Window Layouts shortcut starts the guarded gesture." : {
 
     },
     "Choose a window in another application first." : {
@@ -105,10 +130,13 @@
     "Close" : {
 
     },
-    "Close Window Layouts panel" : {
+    "Close Window Layouts Experimental panel" : {
 
     },
-    "Configure Window Layouts…" : {
+    "Configure Window Layouts Experimental…" : {
+
+    },
+    "Confirm the Mission Control Space shortcuts in General settings first." : {
 
     },
     "Control-click or right-click the Dock icon to apply layouts to the last active third-party app. A normal click retains the standard macOS app-activation behavior. The menu-bar item remains available at all times. Changes take effect after Apply." : {
@@ -135,7 +163,16 @@
     "Custom layout identifiers must be unique." : {
 
     },
+    "Custom Layout Transfer Failed" : {
+
+    },
     "Custom Layouts" : {
+
+    },
+    "Custom layouts exported." : {
+
+    },
+    "Custom layouts imported. Click Apply to save." : {
 
     },
     "Default" : {
@@ -162,10 +199,19 @@
     "Down" : {
 
     },
+    "Dr. Brett Addison" : {
+
+    },
     "Drag across the 24 × 12 grid to choose the window’s position and size." : {
 
     },
     "Drag targets" : {
+
+    },
+    "Enable experimental movement between Spaces" : {
+
+    },
+    "Enable Experimental Space Movement in General settings first." : {
 
     },
     "Enabled" : {
@@ -175,6 +221,21 @@
 
     },
     "Every custom layout must have a name." : {
+
+    },
+    "Experimental Build" : {
+
+    },
+    "Experimental Space movement" : {
+
+    },
+    "Experimental Space Movement" : {
+
+    },
+    "Export Custom Layouts" : {
+
+    },
+    "Export…" : {
 
     },
     "Extra Big" : {
@@ -212,10 +273,16 @@
     "General" : {
 
     },
+    "GitHub Repository" : {
+
+    },
+    "GitHub returned an invalid update response." : {
+
+    },
     "Global keyboard shortcut" : {
 
     },
-    "GPL-3.0-or-later · No third-party dependencies" : {
+    "GPL-3.0-or-later" : {
 
     },
     "Grant access in System Settings, then choose Check Again." : {
@@ -239,7 +306,25 @@
     "Horizontal Halves" : {
 
     },
-    "If drag events are not detected on this Mac, allow Window Layouts under System Settings → Privacy & Security → Input Monitoring, then relaunch it. Window Layouts never synthesizes or modifies input events." : {
+    "I confirmed Control–Left Arrow and Control–Right Arrow switch Spaces" : {
+
+    },
+    "If drag events are not detected on this Mac, allow Window Layouts Experimental under System Settings → Privacy & Security → Input Monitoring, then relaunch it. Drag targets never synthesize or modify input events." : {
+
+    },
+    "Import Custom Layouts" : {
+
+    },
+    "Import…" : {
+
+    },
+    "In System Settings, open Keyboard → Keyboard Shortcuts → Mission Control and enable Move left a space and Move right a space as Control–Left Arrow and Control–Right Arrow." : {
+
+    },
+    "Input event posting" : {
+
+    },
+    "Input event posting access is enabled." : {
 
     },
     "Launch at login" : {
@@ -278,6 +363,12 @@
     "Left Two Thirds" : {
 
     },
+    "License" : {
+
+    },
+    "macOS could not create the experimental input gesture." : {
+
+    },
     "macOS could not find this app as a login item. Run a signed app bundle and try again." : {
 
     },
@@ -288,6 +379,9 @@
 
     },
     "macOS did not enable the login item." : {
+
+    },
+    "macOS has no public API for moving another app’s window to a Space or reading the Mission Control shortcut configuration. This experiment briefly posts a public Quartz mouse-hold and Control-arrow gesture only after you opt in and confirm those shortcuts." : {
 
     },
     "macOS limitation" : {
@@ -317,7 +411,7 @@
     "Menu group order" : {
 
     },
-    "Monitor movement uses public Accessibility and screen APIs. Moving third-party windows between Spaces is unavailable because macOS provides no public API for it." : {
+    "Monitor movement uses public Accessibility and screen APIs. Space movement remains experimental input emulation because macOS provides no public API for assigning third-party windows to Spaces. It may stop working after a macOS update or with apps that expose nonstandard title bars." : {
 
     },
     "Move Down" : {
@@ -344,13 +438,16 @@
     "Move Up" : {
 
     },
+    "Move Window to Next Space" : {
+
+    },
+    "Move Window to Previous Space" : {
+
+    },
     "Name" : {
 
     },
     "Native full-screen windows are not supported." : {
-
-    },
-    "Native window layouts for macOS" : {
 
     },
     "New group" : {
@@ -371,10 +468,22 @@
     "No other display is available." : {
 
     },
+    "No third-party dependencies" : {
+
+    },
+    "No unobstructed, noninteractive title-bar point was available for the experimental gesture." : {
+
+    },
     "No usable display contains the focused window." : {
 
     },
+    "OK" : {
+
+    },
     "Open Login Items Settings…" : {
+
+    },
+    "Open System Settings…" : {
 
     },
     "Open Window Layouts when I log in" : {
@@ -395,6 +504,9 @@
     "Panel size" : {
 
     },
+    "Permission to post input events is required." : {
+
+    },
     "Platform limits" : {
 
     },
@@ -404,7 +516,7 @@
     "Quarters" : {
 
     },
-    "Quit Window Layouts" : {
+    "Quit Window Layouts Experimental" : {
 
     },
     "Record Shortcut" : {
@@ -413,10 +525,22 @@
     "Registration failures" : {
 
     },
+    "Release held modifier keys and mouse buttons, then try again." : {
+
+    },
     "Remove" : {
 
     },
     "Reorder the built-in and Custom sections in the menu-bar menu." : {
+
+    },
+    "Replace" : {
+
+    },
+    "Replace Custom Layouts?" : {
+
+    },
+    "Request Input Event Access…" : {
 
     },
     "Required" : {
@@ -438,6 +562,9 @@
 
     },
     "Right Two Thirds" : {
+
+    },
+    "Safety: the action waits for your physical mouse buttons and modifier keys to be released, refuses covered or interactive title-bar points, rejects native full-screen windows, releases every synthetic key and mouse button on failure, and restores the pointer. The result cannot be verified through a public API." : {
 
     },
     "Saved layouts" : {
@@ -473,6 +600,12 @@
     "Small" : {
 
     },
+    "Source code" : {
+
+    },
+    "Space movement is an unsupported, opt-in prototype." : {
+
+    },
     "Status" : {
 
     },
@@ -488,10 +621,25 @@
     "The display could not be filled." : {
 
     },
+    "The downloaded application has unexpected identity or version information." : {
+
+    },
+    "The downloaded application was not signed by the Window Layouts developer identity." : {
+
+    },
+    "The downloaded update could not be extracted." : {
+
+    },
+    "The downloaded update did not match GitHub’s SHA-256 digest." : {
+
+    },
     "The dragged window is no longer available." : {
 
     },
     "The dragged window operation could not be completed." : {
+
+    },
+    "The experimental Space movement gesture could not be completed." : {
 
     },
     "The focused application could not complete the window operation." : {
@@ -506,6 +654,9 @@
     "The focused item is not a standard application window." : {
 
     },
+    "The focused item is not a standard movable application window." : {
+
+    },
     "The focused window cannot be moved and resized through Accessibility." : {
 
     },
@@ -516,6 +667,15 @@
 
     },
     "The green-button panel is compact and accepts input only while visibly open. Every drag-target and preview panel always ignores mouse events. The menu-bar item is always the emergency disable path." : {
+
+    },
+    "The installed version could not be identified." : {
+
+    },
+    "The latest GitHub release has an invalid version." : {
+
+    },
+    "The latest release does not contain the expected macOS application archive." : {
 
     },
     "The layout library uses an unsupported schema version." : {
@@ -542,14 +702,45 @@
     "The target display has no eligible visible windows." : {
 
     },
+    "The update could not be downloaded." : {
+
+    },
+    "The update could not be installed. The existing application was preserved." : {
+
+    },
+    "The update does not include a verifiable SHA-256 digest." : {
+
+    },
+    "The update download address is not trusted." : {
+
+    },
+    "The update is larger than the permitted download size." : {
+
+    },
+    "The update was installed but could not be relaunched." : {
+
+    },
     "The window operation could not be completed." : {
 
     },
     "Thirds" : {
 
     },
+    "This build has a separate application identity and settings library. Stable update checks and automatic installation are intentionally unavailable so it cannot replace or modify the released Window Layouts app." : {
+
+    },
     "This change takes effect after you choose Apply. A build run directly from Xcode may have a temporary location; verify the setting again after installing the signed app in Applications." : {
 
+    },
+    "This will replace the current custom layouts and groups in this Settings draft with %lld layouts and %lld groups. Changes are not saved until you click Apply." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "This will replace the current custom layouts and groups in this Settings draft with %1$lld layouts and %2$lld groups. Changes are not saved until you click Apply."
+          }
+        }
+      }
     },
     "Top Half" : {
 
@@ -587,118 +778,13 @@
     "Use the named accessibility actions to move or resize the selected region." : {
 
     },
-    "Vertical Halves" : {
-
-    },
-    "%@ (Build %@)" : {
-
-    },
-    "Author" : {
-
-    },
-    "Automatic installation is available only when Window Layouts is running from Applications." : {
-
-    },
-    "Cancel" : {
-
-    },
-    "Check for Updates" : {
-
-    },
-    "Check GitHub for a newer stable release of Window Layouts." : {
-
-    },
-    "Checking for updates…" : {
-
-    },
-    "Download and Install" : {
-
-    },
-    "Download, Install, and Relaunch" : {
-
-    },
-    "Downloading Window Layouts %@…" : {
-
-    },
-    "Dr. Brett Addison" : {
-
-    },
-    "GitHub Repository" : {
-
-    },
-    "GitHub returned an invalid update response." : {
-
-    },
-    "GPL-3.0-or-later" : {
-
-    },
-    "Install Window Layouts %@?" : {
-
-    },
-    "License" : {
-
-    },
-    "No third-party dependencies" : {
-
-    },
-    "Release Notes" : {
-
-    },
-    "Software Update" : {
-
-    },
-    "Source code" : {
-
-    },
-    "The downloaded application has unexpected identity or version information." : {
-
-    },
-    "The downloaded application was not signed by the Window Layouts developer identity." : {
-
-    },
-    "The downloaded update could not be extracted." : {
-
-    },
-    "The downloaded update did not match GitHub’s SHA-256 digest." : {
-
-    },
-    "The installed version could not be identified." : {
-
-    },
-    "The latest GitHub release has an invalid version." : {
-
-    },
-    "The latest release does not contain the expected macOS application archive." : {
-
-    },
-    "The update could not be downloaded." : {
-
-    },
-    "The update could not be installed. The existing application was preserved." : {
-
-    },
-    "The update does not include a verifiable SHA-256 digest." : {
-
-    },
-    "The update download address is not trusted." : {
-
-    },
-    "The update is larger than the permitted download size." : {
-
-    },
-    "The update was installed but could not be relaunched." : {
-
-    },
-    "Update checks contact only the public Window Layouts GitHub repository. Automatic installation verifies the release SHA-256 digest, application identity, Developer ID signature, and Gatekeeper assessment before replacing the installed app." : {
-
-    },
-    "Verifying and installing Window Layouts %@…" : {
-
-    },
     "Version" : {
 
     },
-    "View Release" : {
+    "Vertical Halves" : {
+
+    },
+    "View Stable Window Layouts Releases" : {
 
     },
     "Window" : {
@@ -707,25 +793,16 @@
     "Window Actions" : {
 
     },
-    "Window Layouts" : {
+    "Window Layouts Experimental" : {
 
     },
-    "Window Layouts %@ is available." : {
-
-    },
-    "Window Layouts %@ is up to date." : {
+    "Window Layouts Experimental uses the public macOS Accessibility API to find, move, and resize the focused window. It never bypasses macOS privacy controls." : {
 
     },
     "Window Layouts is a native macOS utility for easily creating and applying custom layouts to application windows." : {
 
     },
-    "Window Layouts will verify the download, replace the copy in Applications, and relaunch. Your layouts and shortcuts will be preserved." : {
-
-    },
     "Window Layouts uses the public Accessibility position of the green button to show a separate nonactivating panel. It does not modify or replace Apple’s built-in title-bar menu. Changes take effect after Apply." : {
-
-    },
-    "Window Layouts uses the public macOS Accessibility API to find, move, and resize the focused window. It never bypasses macOS privacy controls." : {
 
     },
     "Your Workspace, Organized Your Way!" : {

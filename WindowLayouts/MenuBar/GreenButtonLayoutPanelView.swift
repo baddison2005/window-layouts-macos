@@ -170,14 +170,14 @@ struct GreenButtonLayoutPanelView: View {
         )
         panelButton(
             label: "Move Window to Previous Space",
-            systemImage: "rectangle.portrait.and.arrow.left",
+            systemImage: "arrow.left.square",
             disabled: spaceActionsDisabled
         ) {
             moveToSpace(.previous)
         }
         panelButton(
             label: "Move Window to Next Space",
-            systemImage: "rectangle.portrait.and.arrow.right",
+            systemImage: "arrow.right.square",
             disabled: spaceActionsDisabled
         ) {
             moveToSpace(.next)
