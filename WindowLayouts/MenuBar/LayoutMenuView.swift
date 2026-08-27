@@ -19,6 +19,13 @@ struct LayoutMenuView: View {
         actionsDisabled || controller.monitorCount < 2
     }
 
+    private var spaceActionsDisabled: Bool {
+        actionsDisabled
+            || !controller.hasPostEventAccess
+            || !settingsStore.library.experimentalSpaceMovementEnabled
+            || !settingsStore.library.missionControlSpaceShortcutsConfirmed
+    }
+
     var body: some View {
         Text(
             targetController.targetApplicationName.map { "Apply to: \($0)" }
@@ -65,10 +72,10 @@ struct LayoutMenuView: View {
         }
 
         SettingsLink {
-            Text("Configure Window Layouts…")
+            Text("Configure Window Layouts Experimental…")
         }
 
-        Button("Quit Window Layouts") {
+        Button("Quit Window Layouts Experimental") {
             NSApplication.shared.terminate(nil)
         }
         .keyboardShortcut("q")
@@ -117,6 +124,18 @@ struct LayoutMenuView: View {
                     perform(.moveToNextMonitor)
                 }
                 .disabled(monitorActionsDisabled)
+
+                Divider()
+
+                Button("Move Window to Previous Space") {
+                    moveWindowToSpace(.previous)
+                }
+                .disabled(spaceActionsDisabled)
+
+                Button("Move Window to Next Space") {
+                    moveWindowToSpace(.next)
+                }
+                .disabled(spaceActionsDisabled)
             }
         }
     }
@@ -184,6 +203,16 @@ struct LayoutMenuView: View {
         }
         controller.fillScreen(
             using: group,
+            targetingProcessIdentifier: processIdentifier
+        )
+    }
+
+    private func moveWindowToSpace(_ direction: SpaceMovementDirection) {
+        guard let processIdentifier = targetController.targetProcessIdentifier else {
+            return
+        }
+        controller.moveWindowToSpace(
+            direction,
             targetingProcessIdentifier: processIdentifier
         )
     }

@@ -1,114 +1,77 @@
-# Window Layouts for macOS
+# Window Layouts Experimental for macOS
 
 ### Your Workspace, Organized Your Way!
 
-Window Layouts is a native macOS utility for quickly arranging application
-windows. Apply a layout from the menu bar, assign global keyboard shortcuts, or
-enable optional visual controls for a more direct workflow across one or more
-displays.
+> [!CAUTION]
+> This branch is an unsupported, opt-in prototype for moving a window between
+> macOS Spaces. It is deliberately separate from the signed Window Layouts
+> release and is not distributed as an official update.
 
-Window Layouts is built with SwiftUI and AppKit and uses only public macOS APIs.
-It has no third-party dependencies, telemetry, or analytics.
+Window Layouts Experimental is a native macOS utility for arranging application
+windows. It includes the stable layout, display-transfer, fill-display,
+green-button panel, drag-target, Dock-menu, and global-shortcut features, plus a
+guarded experiment that asks macOS to carry the active window to the previous or
+next Space.
 
-## Features
+The app uses SwiftUI, AppKit, the public Accessibility API, and public Quartz
+event APIs. It has no third-party dependencies, telemetry, or analytics. It does
+not use private Spaces APIs or bypass macOS privacy controls.
 
-- Arrange windows into halves, quarters, thirds, and two-thirds, or center,
-  maximize, and restore them.
-- Create up to 20 custom layouts on a flexible 24 × 12 grid and organize them
-  into named, reorderable groups.
-- Move windows between displays while preserving recognized layouts or
-  proportional free-form positioning.
-- Fill a target display with all eligible visible windows using a built-in or
-  custom layout group.
-- Assign configurable global keyboard shortcuts to layouts, groups, window
-  actions, and display actions.
-- Adjust edge-aware padding from 0 to 200 logical points.
-- Access layouts from the menu bar and, optionally, from the Dock menu.
-- Enable an optional layout panel near a window's green button without
-  modifying the title bar or replacing Apple's window controls.
-- Enable optional input-transparent drag targets with live layout previews.
-- Launch automatically at login using the public Service Management API.
-- Check the public GitHub repository for stable updates and securely install a
-  newer signed and notarized release from the About tab.
-- Save the layout library safely in Application Support, with automatic
-  fallback to defaults if the saved file becomes unreadable.
+## Isolation from the released app
 
-## Requirements
+The experimental build uses:
 
-- macOS 14.6 or later.
-- Accessibility permission to discover, move, and resize windows in other
-  applications.
-- Input Monitoring permission may be needed for optional drag targets on some
-  macOS installations.
+- the product name **Window Layouts Experimental**;
+- bundle identifier `com.astrobrett.WindowLayouts.Experimental`;
+- a separate Application Support directory and settings library;
+- a separate Accessibility/Input Monitoring identity; and
+- no stable-release updater or automatic installer.
 
-## Installation
+Quit the released Window Layouts app while testing this build so two copies do
+not register overlapping shortcuts or react to the same window action.
 
-Window Layouts does not require Xcode. To install the signed and notarized app:
+## How experimental Space movement works
 
-1. Download the latest `Window-Layouts-VERSION-macOS.dmg` from
-   [GitHub Releases](https://github.com/baddison2005/window-layouts-macos/releases/latest).
-2. Open the DMG and drag **Window Layouts.app** onto the **Applications**
-   shortcut.
-3. Eject the Window Layouts disk image, then open **Window Layouts** from the
-   Applications folder.
-4. Follow the onboarding prompt to grant Accessibility access in **System
-   Settings → Privacy & Security → Accessibility**.
+macOS does not provide a public API for assigning another application's window
+to a Space. This prototype reproduces the user gesture through public Quartz
+events: it briefly holds a verified noninteractive point in the active window's
+title bar while sending Control–Left Arrow or Control–Right Arrow.
 
-After installation, choose **Configure Window Layouts… → About → Check for
-Updates** to check GitHub and securely install newer releases. Update checks
-occur only when requested. The notarized ZIP in each release is also available
-for users who prefer manual installation:
-expand the ZIP, move **Window Layouts.app** into `/Applications`, and launch it
-from there. When upgrading, quit the installed app before replacing it. Window
-Layouts never asks users to bypass Gatekeeper or disable macOS security.
+The prototype:
 
-Window Layouts does not use private APIs or attempt to bypass macOS privacy
-controls. Grant access only through the app's onboarding prompt or in **System
-Settings → Privacy & Security → Accessibility**.
+- requires explicit opt-in and confirmation of the Mission Control shortcuts;
+- requires macOS Accessibility and input-event posting permission;
+- waits until real mouse buttons and modifier keys have been released;
+- rejects minimized, native full-screen, nonstandard, immovable, obscured, or
+  unsafe target windows;
+- releases every synthetic key and mouse button after success or failure; and
+- restores the pointer to its original location.
 
-## Getting started
+There is no public way to verify which Space contains a third-party window, so
+the app can report only that the gesture was requested. Behavior can vary by app
+and may stop working after a macOS update.
 
-1. Launch Window Layouts and grant Accessibility access when prompted.
-2. Select the Window Layouts icon in the menu bar.
-3. Choose a layout to apply it to the window named at the top of the menu.
-4. Choose **Configure Window Layouts…** to customize layouts, groups, padding,
-   shortcuts, and optional controls.
+## Build and configure
 
-Settings changes remain in a draft until **Apply** is selected. **Cancel** or
-closing the Settings window discards unapplied changes.
+1. Open `WindowLayouts.xcodeproj` from this experimental worktree in Xcode.
+2. Select your development team and run **WindowLayouts**.
+3. Grant **Window Layouts Experimental** access when macOS requests it. If
+   needed, check **System Settings → Privacy & Security → Accessibility** and
+   **Input Monitoring**.
+4. In **System Settings → Keyboard → Keyboard Shortcuts → Mission Control**,
+   enable **Move left a space** and **Move right a space** as Control–Left Arrow
+   and Control–Right Arrow.
+5. Open **Configure Window Layouts Experimental… → General**, enable the
+   experimental feature, confirm those Mission Control shortcuts, and choose
+   **Apply**.
+6. In **Shortcuts**, assign different trigger combinations to **Move Window to
+   Previous Space** and **Move Window to Next Space**. Do not assign the raw
+   Control-arrow combinations, because Mission Control needs them internally.
 
-The green-button panel, Dock icon, and drag targets are disabled by default and
-can be enabled under **General**. The menu bar remains available as an emergency
-path for disabling optional panels. All drag targets and previews ignore mouse
-events, so invisible or screen-sized overlays never intercept input.
+The actions are also available from the menu bar, Dock menu, and green-button
+panel when the experiment is enabled and permissions are granted.
 
-To arrange multiple windows at once, choose **Fill Target Display** and select a
-layout group. The target window determines which display is filled. Minimized,
-native full-screen, immovable, off-display, and other-Space windows are left
-unchanged.
-
-## Platform boundaries
-
-Window Layouts cannot move third-party windows between Spaces because macOS does
-not provide a supported public API for that operation. It also does not modify
-application title bars or suppress Apple's standard green-button menu.
-
-Some applications expose limited or nonstandard Accessibility information. In
-those cases, particular windows or controls may not be available to Window
-Layouts.
-
-## Privacy
-
-Window Layouts contains no telemetry or analytics. Its privacy-redacted logs do
-not record window titles, document paths, typed keys, or shortcut contents.
-
-The App Sandbox is disabled because controlling other applications through the
-public Accessibility client API is central to the app. Release builds use the
-Hardened Runtime and are signed and notarized with Apple.
-
-## Build and test
-
-Open `WindowLayouts.xcodeproj` in Xcode 26.6 or run:
+Run the test suite without posting any real input events:
 
 ```bash
 xcodebuild test \
@@ -118,17 +81,21 @@ xcodebuild test \
   CODE_SIGNING_ALLOWED=NO
 ```
 
-There are no third-party dependencies. Developer ID signing, notarization,
-stapling, repeatable ZIP and DMG packaging, and fresh-user installation are
-documented in [`docs/DISTRIBUTION.md`](docs/DISTRIBUTION.md).
+## Other safety boundaries
 
-When developing in Xcode, quit any previously running copy before launching a
-new build. Multiple copies can issue competing window movements.
+Window Layouts never modifies application title bars. Optional drag targets and
+previews are nonactivating panels with `ignoresMouseEvents = true`; hidden or
+screen-sized overlay windows cannot accept input. The menu-bar item remains the
+emergency path for disabling optional overlays.
 
-## Fedora/KDE edition
+The App Sandbox is disabled because controlling other applications through the
+Accessibility API is central to the prototype. A local development build should
+not be treated as a notarized release.
 
-A Fedora/KDE Plasma implementation of Window Layouts is maintained separately
-at [baddison2005/window-layouts-kde](https://github.com/baddison2005/window-layouts-kde).
+## Stable and Fedora/KDE editions
+
+- Stable macOS edition: [baddison2005/window-layouts-macos](https://github.com/baddison2005/window-layouts-macos)
+- Fedora/KDE Plasma edition: [baddison2005/window-layouts-kde](https://github.com/baddison2005/window-layouts-kde)
 
 ## License
 

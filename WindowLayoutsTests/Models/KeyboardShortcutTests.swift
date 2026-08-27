@@ -33,4 +33,22 @@ struct KeyboardShortcutTests {
 
         #expect(first.identity == second.identity)
     }
+
+    @Test func detectsExactMissionControlSpaceNavigationShortcuts() {
+        #expect(KeyboardShortcut(
+            keyCode: 123,
+            modifiers: [.control],
+            keyLabel: "←"
+        ).isMissionControlSpaceNavigationShortcut)
+        #expect(KeyboardShortcut(
+            keyCode: 124,
+            modifiers: [.control],
+            keyLabel: "→"
+        ).isMissionControlSpaceNavigationShortcut)
+        #expect(!KeyboardShortcut(
+            keyCode: 124,
+            modifiers: [.control, .option],
+            keyLabel: "→"
+        ).isMissionControlSpaceNavigationShortcut)
+    }
 }

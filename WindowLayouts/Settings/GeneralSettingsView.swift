@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Window Layouts contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+import AppKit
 import SwiftUI
 
 struct GeneralSettingsView: View {
@@ -75,14 +76,69 @@ struct GeneralSettingsView: View {
                 .foregroundStyle(.secondary)
 
                 Text(
-                    "If drag events are not detected on this Mac, allow Window Layouts under System Settings → Privacy & Security → Input Monitoring, then relaunch it. Window Layouts never synthesizes or modifies input events."
+                    "If drag events are not detected on this Mac, allow Window Layouts Experimental under System Settings → Privacy & Security → Input Monitoring, then relaunch it. Drag targets never synthesize or modify input events."
                 )
                 .foregroundStyle(.secondary)
             }
 
+            Section("Experimental Space movement") {
+                Toggle(
+                    "Enable experimental movement between Spaces",
+                    isOn: $library.experimentalSpaceMovementEnabled
+                )
+
+                Toggle(
+                    "I confirmed Control–Left Arrow and Control–Right Arrow switch Spaces",
+                    isOn: $library.missionControlSpaceShortcutsConfirmed
+                )
+                .disabled(!library.experimentalSpaceMovementEnabled)
+
+                Text(
+                    "macOS has no public API for moving another app’s window to a Space or reading the Mission Control shortcut configuration. This experiment briefly posts a public Quartz mouse-hold and Control-arrow gesture only after you opt in and confirm those shortcuts."
+                )
+                .foregroundStyle(.secondary)
+
+                Text(
+                    "In System Settings, open Keyboard → Keyboard Shortcuts → Mission Control and enable Move left a space and Move right a space as Control–Left Arrow and Control–Right Arrow."
+                )
+                .foregroundStyle(.secondary)
+
+                Button("Open System Settings…") {
+                    NSWorkspace.shared.open(
+                        URL(fileURLWithPath: "/System/Applications/System Settings.app")
+                    )
+                }
+
+                LabeledContent("Input event posting") {
+                    Text(controller.hasPostEventAccess ? "Enabled" : "Required")
+                        .foregroundStyle(
+                            controller.hasPostEventAccess ? .green : .secondary
+                        )
+                }
+
+                HStack {
+                    if !controller.hasPostEventAccess {
+                        Button("Request Input Event Access…") {
+                            controller.requestPostEventAccess()
+                        }
+                    }
+                    Button("Check Again") {
+                        controller.refreshAccessibilityAccess()
+                    }
+                }
+
+                Text(
+                    "Safety: the action waits for your physical mouse buttons and modifier keys to be released, refuses covered or interactive title-bar points, rejects native full-screen windows, releases every synthetic key and mouse button on failure, and restores the pointer. The result cannot be verified through a public API."
+                )
+                .foregroundStyle(.secondary)
+
+                Text("Changes take effect after you choose Apply.")
+                    .foregroundStyle(.secondary)
+            }
+
             Section("Accessibility") {
                 Text(
-                    "Window Layouts uses the public macOS Accessibility API to find, move, and resize the focused window. It never bypasses macOS privacy controls."
+                    "Window Layouts Experimental uses the public macOS Accessibility API to find, move, and resize the focused window. It never bypasses macOS privacy controls."
                 )
 
                 LabeledContent("Status") {
@@ -171,7 +227,7 @@ struct GeneralSettingsView: View {
 
             Section("Platform limits") {
                 Text(
-                    "Monitor movement uses public Accessibility and screen APIs. Moving third-party windows between Spaces is unavailable because macOS provides no public API for it."
+                    "Monitor movement uses public Accessibility and screen APIs. Space movement remains experimental input emulation because macOS provides no public API for assigning third-party windows to Spaces. It may stop working after a macOS update or with apps that expose nonstandard title bars."
                 )
             }
         }

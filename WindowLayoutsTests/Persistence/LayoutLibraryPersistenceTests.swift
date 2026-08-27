@@ -51,7 +51,9 @@ struct LayoutLibraryPersistenceTests {
             layoutPanelSize: .big,
             dragTargetsEnabled: true,
             dragTargetPlacement: .top,
-            showAllTopDragTargets: true
+            showAllTopDragTargets: true,
+            experimentalSpaceMovementEnabled: true,
+            missionControlSpaceShortcutsConfirmed: true
         )
 
         try location.persistence.save(library)

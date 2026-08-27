@@ -67,6 +67,10 @@ nonisolated struct KeyboardShortcut: Codable, Equatable, Hashable, Sendable {
         KeyboardShortcutIdentity(keyCode: keyCode, modifiers: modifiers)
     }
 
+    var isMissionControlSpaceNavigationShortcut: Bool {
+        modifiers == [.control] && (keyCode == 123 || keyCode == 124)
+    }
+
     func validated() throws -> KeyboardShortcut {
         guard modifiers.subtracting(.supported).isEmpty else {
             throw KeyboardShortcutValidationError.unsupportedModifier

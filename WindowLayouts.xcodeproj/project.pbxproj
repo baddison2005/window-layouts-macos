@@ -17,7 +17,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		A7485E21303578DF001DA53B /* Window Layouts.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Window Layouts.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A7485E21303578DF001DA53B /* Window Layouts Experimental.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Window Layouts Experimental.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A7485E2E303578DF001DA53B /* WindowLayoutsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WindowLayoutsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -64,7 +64,7 @@
 		A7485E22303578DF001DA53B /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				A7485E21303578DF001DA53B /* Window Layouts.app */,
+				A7485E21303578DF001DA53B /* Window Layouts Experimental.app */,
 				A7485E2E303578DF001DA53B /* WindowLayoutsTests.xctest */,
 			);
 			name = Products;
@@ -92,7 +92,7 @@
 			packageProductDependencies = (
 			);
 			productName = WindowLayouts;
-			productReference = A7485E21303578DF001DA53B /* Window Layouts.app */;
+			productReference = A7485E21303578DF001DA53B /* Window Layouts Experimental.app */;
 			productType = "com.apple.product-type.application";
 		};
 		A7485E2D303578DF001DA53B /* WindowLayoutsTests */ = {
@@ -325,15 +325,15 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 9001;
 				DEVELOPMENT_TEAM = SRNLN9U724;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = NO;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleName = "Window Layouts";
+				INFOPLIST_KEY_CFBundleName = "Window Layouts Experimental";
 				INFOPLIST_KEY_LSUIElement = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "Window Layouts";
+				INFOPLIST_KEY_CFBundleDisplayName = "Window Layouts Experimental";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Window Layouts contributors. GPL-3.0-or-later.";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -342,9 +342,9 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.6;
 				MARKETING_VERSION = 1.2.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.astrobrett.WindowLayouts;
+				PRODUCT_BUNDLE_IDENTIFIER = com.astrobrett.WindowLayouts.Experimental;
 				PRODUCT_MODULE_NAME = WindowLayouts;
-				PRODUCT_NAME = "Window Layouts";
+				PRODUCT_NAME = "Window Layouts Experimental";
 				REGISTER_APP_GROUPS = NO;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -362,16 +362,16 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 9001;
 				DEVELOPMENT_TEAM = SRNLN9U724;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = NO;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleName = "Window Layouts";
+				INFOPLIST_KEY_CFBundleName = "Window Layouts Experimental";
 				INFOPLIST_KEY_LSUIElement = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "Window Layouts";
+				INFOPLIST_KEY_CFBundleDisplayName = "Window Layouts Experimental";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Window Layouts contributors. GPL-3.0-or-later.";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -380,9 +380,9 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.6;
 				MARKETING_VERSION = 1.2.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.astrobrett.WindowLayouts;
+				PRODUCT_BUNDLE_IDENTIFIER = com.astrobrett.WindowLayouts.Experimental;
 				PRODUCT_MODULE_NAME = WindowLayouts;
-				PRODUCT_NAME = "Window Layouts";
+				PRODUCT_NAME = "Window Layouts Experimental";
 				REGISTER_APP_GROUPS = NO;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -400,12 +400,12 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 9001;
 				DEVELOPMENT_TEAM = SRNLN9U724;
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.6;
 				MARKETING_VERSION = 1.2.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.astrobrett.WindowLayoutsTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.astrobrett.WindowLayouts.ExperimentalTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
@@ -413,7 +413,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Window Layouts.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Window Layouts";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Window Layouts Experimental.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Window Layouts Experimental";
 			};
 			name = Debug;
 		};
@@ -424,12 +424,12 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 9001;
 				DEVELOPMENT_TEAM = SRNLN9U724;
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.6;
 				MARKETING_VERSION = 1.2.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.astrobrett.WindowLayoutsTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.astrobrett.WindowLayouts.ExperimentalTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
@@ -437,7 +437,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Window Layouts.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Window Layouts";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Window Layouts Experimental.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Window Layouts Experimental";
 			};
 			name = Release;
 		};

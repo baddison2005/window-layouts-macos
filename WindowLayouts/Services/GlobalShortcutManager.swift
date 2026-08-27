@@ -12,6 +12,7 @@ final class GlobalShortcutManager: ObservableObject {
     private let service: GlobalShortcutRegistering
     private let actionHandler: (WindowAction) -> Void
     private let fillScreenHandler: (WindowFillGroup) -> Void
+    private let spaceMovementHandler: (SpaceMovementDirection) -> Void
     private var settingsObservation: AnyCancellable?
 
     convenience init(
@@ -26,6 +27,9 @@ final class GlobalShortcutManager: ObservableObject {
             },
             fillScreenHandler: { [weak controller] group in
                 controller?.fillScreen(using: group)
+            },
+            spaceMovementHandler: { [weak controller] direction in
+                controller?.moveWindowToSpace(direction)
             }
         )
     }
@@ -34,12 +38,14 @@ final class GlobalShortcutManager: ObservableObject {
         settingsStore: SettingsStore,
         service: GlobalShortcutRegistering,
         actionHandler: @escaping (WindowAction) -> Void,
-        fillScreenHandler: @escaping (WindowFillGroup) -> Void = { _ in }
+        fillScreenHandler: @escaping (WindowFillGroup) -> Void = { _ in },
+        spaceMovementHandler: @escaping (SpaceMovementDirection) -> Void = { _ in }
     ) {
         self.settingsStore = settingsStore
         self.service = service
         self.actionHandler = actionHandler
         self.fillScreenHandler = fillScreenHandler
+        self.spaceMovementHandler = spaceMovementHandler
 
         service.onAction = { [weak self] actionID in
             self?.perform(actionID)
@@ -72,6 +78,8 @@ final class GlobalShortcutManager: ObservableObject {
             actionHandler(action)
         case .fillScreen(let group):
             fillScreenHandler(group)
+        case .moveToSpace(let direction):
+            spaceMovementHandler(direction)
         }
     }
 }

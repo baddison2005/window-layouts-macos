@@ -66,7 +66,7 @@ struct WindowLayoutsApp: App {
         } label: {
             Image("MenuBarIconCompact")
                 .renderingMode(.original)
-                .accessibilityLabel("Window Layouts")
+                .accessibilityLabel("Window Layouts Experimental")
         }
         .menuBarExtraStyle(.menu)
 

@@ -82,6 +82,17 @@ struct ShortcutActionCatalogTests {
             rawValue: "fill.builtin.horizontal-halves"
         )))
     }
+
+    @Test func experimentalSpaceActionsHaveStableIDs() {
+        let descriptors = ShortcutActionCatalog.descriptors(for: LayoutLibrary())
+            .filter { $0.category == .experimentalSpaceMovement }
+
+        #expect(descriptors.map(\.id.rawValue) == ["space.previous", "space.next"])
+        #expect(descriptors.map(\.command) == [
+            .moveToSpace(.previous),
+            .moveToSpace(.next),
+        ])
+    }
 }
 
 struct ShortcutKeyLabelTests {

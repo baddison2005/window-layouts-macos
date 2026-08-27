@@ -24,6 +24,7 @@ final class DockIntegrationController: ObservableObject {
     private enum DockCommand {
         case window(WindowAction)
         case fillScreen(WindowFillGroup)
+        case moveToSpace(SpaceMovementDirection)
         case configure
         case disableOptionalOverlays
     }
@@ -89,7 +90,7 @@ final class DockIntegrationController: ObservableObject {
         commands.removeAll()
         nextCommandTag = 1
 
-        let menu = NSMenu(title: String(localized: "Window Layouts"))
+        let menu = NSMenu(title: String(localized: "Window Layouts Experimental"))
         menu.autoenablesItems = false
 
         let targetName = targetApplicationName ?? String(localized: "No eligible app")
@@ -109,7 +110,7 @@ final class DockIntegrationController: ObservableObject {
 
         menu.addItem(.separator())
         menu.addItem(commandItem(
-            title: String(localized: "Configure Window Layouts…"),
+            title: String(localized: "Configure Window Layouts Experimental…"),
             command: .configure,
             enabled: openSettingsAction != nil
         ))
@@ -153,6 +154,13 @@ final class DockIntegrationController: ObservableObject {
         targetProcessIdentifier != nil
             && windowController.hasAccessibilityAccess
             && !windowController.isPerformingAction
+    }
+
+    private var spaceActionsEnabled: Bool {
+        windowActionsEnabled
+            && windowController.hasPostEventAccess
+            && settingsStore.library.experimentalSpaceMovementEnabled
+            && settingsStore.library.missionControlSpaceShortcutsConfirmed
     }
 
     private func recordExternalApplication(_ application: NSRunningApplication?) {
@@ -310,6 +318,17 @@ final class DockIntegrationController: ObservableObject {
             command: .window(.moveToNextMonitor),
             enabled: monitorActionsEnabled
         ))
+        menu.addItem(.separator())
+        menu.addItem(commandItem(
+            title: String(localized: "Move Window to Previous Space"),
+            command: .moveToSpace(.previous),
+            enabled: spaceActionsEnabled
+        ))
+        menu.addItem(commandItem(
+            title: String(localized: "Move Window to Next Space"),
+            command: .moveToSpace(.next),
+            enabled: spaceActionsEnabled
+        ))
     }
 
     private func fillScreenMenuItem() -> NSMenuItem {
@@ -366,6 +385,14 @@ final class DockIntegrationController: ObservableObject {
             }
             windowController.fillScreen(
                 using: group,
+                targetingProcessIdentifier: processIdentifier
+            )
+        case .moveToSpace(let direction):
+            guard let processIdentifier = targetProcessIdentifier else {
+                return
+            }
+            windowController.moveWindowToSpace(
+                direction,
                 targetingProcessIdentifier: processIdentifier
             )
         case .configure:

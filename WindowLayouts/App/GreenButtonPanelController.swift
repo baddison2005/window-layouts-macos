@@ -182,6 +182,15 @@ final class GreenButtonPanelController: ObservableObject {
                     self?.hidePanel()
                     self?.windowController.fillScreen(using: group)
                 },
+                moveToSpace: { [weak self] direction in
+                    let processIdentifier = self?.target?.processIdentifier
+                    self?.hidePanel()
+                    guard let processIdentifier else { return }
+                    self?.windowController.moveWindowToSpace(
+                        direction,
+                        targetingProcessIdentifier: processIdentifier
+                    )
+                },
                 close: { [weak self] in
                     self?.hidePanel()
                 },

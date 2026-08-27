@@ -22,6 +22,8 @@ struct LayoutLibraryTests {
         #expect(library.dragTargetPlacement == .zones)
         #expect(!library.showAllDragTargets)
         #expect(!library.showAllTopDragTargets)
+        #expect(!library.experimentalSpaceMovementEnabled)
+        #expect(!library.missionControlSpaceShortcutsConfirmed)
         #expect(library.orderedMenuGroups == MenuGroupIdentifier.allCases)
     }
 
@@ -123,6 +125,8 @@ struct LayoutLibraryTests {
         #expect(library.layoutPanelSize == .standard)
         #expect(!library.dragTargetsEnabled)
         #expect(library.dragTargetPlacement == .zones)
+        #expect(!library.experimentalSpaceMovementEnabled)
+        #expect(!library.missionControlSpaceShortcutsConfirmed)
         #expect(library.layoutPadding == 8)
     }
 
@@ -174,5 +178,21 @@ struct LayoutLibraryTests {
         let validated = try library.validated()
 
         #expect(validated.shortcuts[group.fillShortcutActionID.rawValue] == shortcut)
+    }
+
+    @Test func spaceMovementShortcutCannotReplaceMissionControlCombination() {
+        for keyCode: UInt32 in [123, 124] {
+            let library = LayoutLibrary(shortcuts: [
+                "space.next": KeyboardShortcut(
+                    keyCode: keyCode,
+                    modifiers: [.control],
+                    keyLabel: keyCode == 123 ? "←" : "→"
+                ),
+            ])
+
+            #expect(throws: LayoutLibraryValidationError.invalidShortcut) {
+                try library.validated()
+            }
+        }
     }
 }

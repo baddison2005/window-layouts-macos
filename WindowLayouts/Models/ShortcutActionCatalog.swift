@@ -18,6 +18,7 @@ nonisolated enum ShortcutActionCategory: String, CaseIterable, Identifiable, Sen
     case customLayouts
     case fillTargetDisplay
     case windowActions
+    case experimentalSpaceMovement
 
     var id: String { rawValue }
 
@@ -27,6 +28,7 @@ nonisolated enum ShortcutActionCategory: String, CaseIterable, Identifiable, Sen
         case .customLayouts: String(localized: "Custom Layouts")
         case .fillTargetDisplay: String(localized: "Fill Target Display")
         case .windowActions: String(localized: "Window Actions")
+        case .experimentalSpaceMovement: String(localized: "Experimental Space Movement")
         }
     }
 }
@@ -34,6 +36,7 @@ nonisolated enum ShortcutActionCategory: String, CaseIterable, Identifiable, Sen
 nonisolated enum ShortcutCommand: Equatable, Sendable {
     case window(WindowAction)
     case fillScreen(WindowFillGroup)
+    case moveToSpace(SpaceMovementDirection)
 }
 
 nonisolated struct ShortcutActionDescriptor: Identifiable, Sendable {
@@ -101,7 +104,15 @@ nonisolated enum ShortcutActionCatalog {
                 command: .window(.moveToNextMonitor)
             ),
         ]
-        return fixed + custom + fillDisplay + window
+        let spaces = SpaceMovementDirection.allCases.map { direction in
+            ShortcutActionDescriptor(
+                id: direction.shortcutActionID,
+                label: direction.name,
+                category: .experimentalSpaceMovement,
+                command: .moveToSpace(direction)
+            )
+        }
+        return fixed + custom + fillDisplay + window + spaces
     }
 
     static func descriptor(
@@ -120,6 +131,12 @@ nonisolated enum ShortcutActionCatalog {
             assignment.key != excludedID.rawValue
                 && assignment.value.identity == shortcut.identity
         }.map { ShortcutActionID(rawValue: $0.key) }
+    }
+}
+
+nonisolated extension SpaceMovementDirection {
+    var shortcutActionID: ShortcutActionID {
+        ShortcutActionID(rawValue: "space.\(rawValue)")
     }
 }
 

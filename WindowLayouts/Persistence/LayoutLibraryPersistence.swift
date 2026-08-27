@@ -19,7 +19,7 @@ nonisolated struct LayoutLibraryPersistence: Sendable {
         ).first ?? FileManager.default.homeDirectoryForCurrentUser
         return LayoutLibraryPersistence(
             fileURL: applicationSupport
-                .appendingPathComponent("Window Layouts", isDirectory: true)
+                .appendingPathComponent("Window Layouts Experimental", isDirectory: true)
                 .appendingPathComponent("layout-library.json", isDirectory: false)
         )
     }

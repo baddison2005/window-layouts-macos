@@ -84,7 +84,9 @@ struct DockIntegrationControllerTests {
         ])
 
         let configureItem = try #require(
-            menu.items.first { $0.title == "Configure Window Layouts…" }
+            menu.items.first {
+                $0.title == "Configure Window Layouts Experimental…"
+            }
         )
         #expect(configureItem.isEnabled)
 

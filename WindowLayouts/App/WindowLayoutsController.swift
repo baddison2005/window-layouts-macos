@@ -8,37 +8,46 @@ import OSLog
 @MainActor
 final class WindowLayoutsController: ObservableObject {
     @Published private(set) var hasAccessibilityAccess: Bool
+    @Published private(set) var hasPostEventAccess: Bool
     @Published private(set) var monitorCount: Int
     @Published private(set) var isPerformingAction = false
     @Published private(set) var statusMessage: String?
 
     private let permissionService: AccessibilityPermissionService
     private let windowService: WindowAccessibilityService
+    private let spaceMovementService: SpaceMovementService
     private let settingsStore: SettingsStore
 
     init(settingsStore: SettingsStore) {
         let permissionService = AccessibilityPermissionService()
         self.permissionService = permissionService
         self.windowService = WindowAccessibilityService()
+        let spaceMovementService = SpaceMovementService()
+        self.spaceMovementService = spaceMovementService
         self.settingsStore = settingsStore
         self.hasAccessibilityAccess = permissionService.isTrusted()
+        self.hasPostEventAccess = spaceMovementService.hasPostEventAccess
         self.monitorCount = ScreenService.snapshots().count
     }
 
     init(
         permissionService: AccessibilityPermissionService,
         windowService: WindowAccessibilityService,
-        settingsStore: SettingsStore
+        settingsStore: SettingsStore,
+        spaceMovementService: SpaceMovementService? = nil
     ) {
         self.permissionService = permissionService
         self.windowService = windowService
+        self.spaceMovementService = spaceMovementService ?? SpaceMovementService()
         self.settingsStore = settingsStore
         self.hasAccessibilityAccess = permissionService.isTrusted()
+        self.hasPostEventAccess = self.spaceMovementService.hasPostEventAccess
         self.monitorCount = ScreenService.snapshots().count
     }
 
     func refreshAccessibilityAccess() {
         hasAccessibilityAccess = permissionService.isTrusted()
+        hasPostEventAccess = spaceMovementService.hasPostEventAccess
     }
 
     func refreshEnvironment() {
@@ -51,6 +60,82 @@ final class WindowLayoutsController: ObservableObject {
         statusMessage = hasAccessibilityAccess
             ? String(localized: "Accessibility access is enabled.")
             : String(localized: "Grant access in System Settings, then choose Check Again.")
+    }
+
+    func requestPostEventAccess() {
+        _ = spaceMovementService.requestPostEventAccess()
+        hasPostEventAccess = spaceMovementService.hasPostEventAccess
+        statusMessage = hasPostEventAccess
+            ? String(localized: "Input event posting access is enabled.")
+            : String(localized: "Grant access in System Settings, then choose Check Again.")
+    }
+
+    func moveWindowToSpace(_ direction: SpaceMovementDirection) {
+        moveWindowToSpace(direction, targetingProcessIdentifier: nil)
+    }
+
+    func moveWindowToSpace(
+        _ direction: SpaceMovementDirection,
+        targetingProcessIdentifier processIdentifier: pid_t
+    ) {
+        moveWindowToSpace(
+            direction,
+            targetingProcessIdentifier: Optional(processIdentifier)
+        )
+    }
+
+    private func moveWindowToSpace(
+        _ direction: SpaceMovementDirection,
+        targetingProcessIdentifier processIdentifier: pid_t?
+    ) {
+        let library = settingsStore.library
+        guard library.experimentalSpaceMovementEnabled else {
+            statusMessage = SpaceMovementError.featureDisabled.localizedDescription
+            return
+        }
+        guard library.missionControlSpaceShortcutsConfirmed else {
+            statusMessage = SpaceMovementError.shortcutConfirmationRequired.localizedDescription
+            return
+        }
+
+        refreshEnvironment()
+        guard hasAccessibilityAccess else {
+            statusMessage = SpaceMovementError.accessibilityPermissionRequired.localizedDescription
+            return
+        }
+        guard hasPostEventAccess else {
+            statusMessage = SpaceMovementError.postEventPermissionRequired.localizedDescription
+            return
+        }
+        guard !isPerformingAction else { return }
+
+        isPerformingAction = true
+        statusMessage = nil
+        Task {
+            do {
+                try await spaceMovementService.moveWindow(
+                    direction,
+                    processIdentifier: processIdentifier
+                )
+                statusMessage = String(localized: "\(direction.name) requested.")
+            } catch let error as SpaceMovementError {
+                AppDiagnostics.windowOperations.error(
+                    "Experimental Space movement failed direction=\(direction.rawValue, privacy: .private) error=\(String(describing: error), privacy: .private)"
+                )
+                if error == .accessibilityPermissionRequired {
+                    hasAccessibilityAccess = false
+                } else if error == .postEventPermissionRequired {
+                    hasPostEventAccess = false
+                }
+                statusMessage = error.localizedDescription
+            } catch {
+                AppDiagnostics.windowOperations.error(
+                    "Experimental Space movement failed direction=\(direction.rawValue, privacy: .private) error=\(String(describing: error), privacy: .private)"
+                )
+                statusMessage = String(localized: "The experimental Space movement gesture could not be completed.")
+            }
+            isPerformingAction = false
+        }
     }
 
     func perform(_ action: WindowAction) {

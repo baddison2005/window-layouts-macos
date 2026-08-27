@@ -8,11 +8,19 @@ struct GreenButtonLayoutPanelView: View {
     @ObservedObject var settingsStore: SettingsStore
     let perform: (WindowAction) -> Void
     let fillScreen: (WindowFillGroup) -> Void
+    let moveToSpace: (SpaceMovementDirection) -> Void
     let close: () -> Void
     let disable: () -> Void
 
     private var actionsDisabled: Bool {
         !controller.hasAccessibilityAccess || controller.isPerformingAction
+    }
+
+    private var spaceActionsDisabled: Bool {
+        actionsDisabled
+            || !controller.hasPostEventAccess
+            || !settingsStore.library.experimentalSpaceMovementEnabled
+            || !settingsStore.library.missionControlSpaceShortcutsConfirmed
     }
 
     var body: some View {
@@ -22,7 +30,7 @@ struct GreenButtonLayoutPanelView: View {
                     .resizable()
                     .frame(width: 18, height: 18)
                     .accessibilityHidden(true)
-                Text("Window Layouts")
+                Text("Window Layouts Experimental")
                     .font(.headline)
                 Spacer()
                 Button(action: close) {
@@ -30,7 +38,7 @@ struct GreenButtonLayoutPanelView: View {
                 }
                 .buttonStyle(.plain)
                 .help("Close")
-                .accessibilityLabel("Close Window Layouts panel")
+                .accessibilityLabel("Close Window Layouts Experimental panel")
             }
 
             Divider()
@@ -68,7 +76,7 @@ struct GreenButtonLayoutPanelView: View {
             Divider()
 
             SettingsLink {
-                Label("Configure Window Layouts…", systemImage: "gearshape")
+                Label("Configure Window Layouts Experimental…", systemImage: "gearshape")
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             .buttonStyle(.plain)
@@ -160,6 +168,20 @@ struct GreenButtonLayoutPanelView: View {
             action: .moveToNextMonitor,
             disabled: controller.monitorCount < 2
         )
+        panelButton(
+            label: "Move Window to Previous Space",
+            systemImage: "rectangle.portrait.and.arrow.left",
+            disabled: spaceActionsDisabled
+        ) {
+            moveToSpace(.previous)
+        }
+        panelButton(
+            label: "Move Window to Next Space",
+            systemImage: "rectangle.portrait.and.arrow.right",
+            disabled: spaceActionsDisabled
+        ) {
+            moveToSpace(.next)
+        }
     }
 
     private func panelHeading(_ label: String) -> some View {
@@ -211,6 +233,27 @@ struct GreenButtonLayoutPanelView: View {
         }
         .buttonStyle(LayoutPanelRowButtonStyle())
         .disabled(actionsDisabled || disabled)
+    }
+
+    private func panelButton(
+        label: String,
+        systemImage: String,
+        disabled: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack(spacing: 10) {
+                Image(systemName: systemImage)
+                    .frame(width: 38, height: 24)
+                    .accessibilityHidden(true)
+                Text(label)
+                    .lineLimit(1)
+                Spacer()
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(LayoutPanelRowButtonStyle())
+        .disabled(disabled)
     }
 }
 

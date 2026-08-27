@@ -22,6 +22,12 @@ struct ShortcutsSettingsView: View {
                     .filter { $0.category == category }
                 if !descriptors.isEmpty {
                     Section(category.name) {
+                        if category == .experimentalSpaceMovement {
+                            Text(
+                                "Choose a shortcut other than Control–Left Arrow or Control–Right Arrow. Those combinations must remain available to Mission Control; your Window Layouts shortcut starts the guarded gesture."
+                            )
+                            .foregroundStyle(.secondary)
+                        }
                         ForEach(descriptors) { descriptor in
                             HStack {
                                 Text(descriptor.label)
@@ -81,6 +87,12 @@ struct ShortcutsSettingsView: View {
             library.shortcuts.removeValue(forKey: descriptor.id.rawValue)
             validationMessage = nil
             return true
+        }
+
+        if descriptor.category == .experimentalSpaceMovement,
+           shortcut.isMissionControlSpaceNavigationShortcut {
+            validationMessage = "Choose a different shortcut; Control–Left Arrow and Control–Right Arrow are reserved for Mission Control."
+            return false
         }
 
         if let conflictID = ShortcutActionCatalog.conflictingActionID(

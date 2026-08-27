@@ -90,6 +90,31 @@ struct GlobalShortcutManagerTests {
         _ = manager
     }
 
+    @Test func dispatchesExperimentalSpaceMovementShortcut() throws {
+        let persistence = LayoutLibraryPersistence(fileURL: temporaryFileURL())
+        let store = SettingsStore(persistence: persistence)
+        let service = ShortcutServiceSpy()
+        var directions: [SpaceMovementDirection] = []
+        let manager = GlobalShortcutManager(
+            settingsStore: store,
+            service: service,
+            actionHandler: { _ in },
+            spaceMovementHandler: { directions.append($0) }
+        )
+        let shortcut = KeyboardShortcut(
+            keyCode: 37,
+            modifiers: [.control, .option],
+            keyLabel: "L"
+        )
+        let actionID = ShortcutActionID(rawValue: "space.next")
+
+        try store.apply(LayoutLibrary(shortcuts: [actionID.rawValue: shortcut]))
+        service.onAction?(actionID)
+
+        #expect(directions == [.next])
+        _ = manager
+    }
+
     private func temporaryFileURL() -> URL {
         FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString)

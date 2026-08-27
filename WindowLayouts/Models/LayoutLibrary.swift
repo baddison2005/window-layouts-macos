@@ -148,7 +148,7 @@ nonisolated enum LayoutLibraryValidationError: Error, Equatable, LocalizedError,
 }
 
 nonisolated struct LayoutLibrary: Codable, Equatable, Sendable {
-    static let currentSchemaVersion = 5
+    static let currentSchemaVersion = 6
     static let maximumCustomLayouts = 20
     static let maximumNameLength = 80
     static let defaultMenuGroupOrder = MenuGroupIdentifier.allCases.map(\.rawValue)
@@ -167,6 +167,8 @@ nonisolated struct LayoutLibrary: Codable, Equatable, Sendable {
     var dragTargetPlacement: DragTargetPlacementStyle
     var showAllDragTargets: Bool
     var showAllTopDragTargets: Bool
+    var experimentalSpaceMovementEnabled: Bool
+    var missionControlSpaceShortcutsConfirmed: Bool
 
     init(
         schemaVersion: Int = Self.currentSchemaVersion,
@@ -182,7 +184,9 @@ nonisolated struct LayoutLibrary: Codable, Equatable, Sendable {
         dragTargetsEnabled: Bool = false,
         dragTargetPlacement: DragTargetPlacementStyle = .zones,
         showAllDragTargets: Bool = false,
-        showAllTopDragTargets: Bool = false
+        showAllTopDragTargets: Bool = false,
+        experimentalSpaceMovementEnabled: Bool = false,
+        missionControlSpaceShortcutsConfirmed: Bool = false
     ) {
         self.schemaVersion = schemaVersion
         self.customLayouts = customLayouts
@@ -198,6 +202,8 @@ nonisolated struct LayoutLibrary: Codable, Equatable, Sendable {
         self.dragTargetPlacement = dragTargetPlacement
         self.showAllDragTargets = showAllDragTargets
         self.showAllTopDragTargets = showAllTopDragTargets
+        self.experimentalSpaceMovementEnabled = experimentalSpaceMovementEnabled
+        self.missionControlSpaceShortcutsConfirmed = missionControlSpaceShortcutsConfirmed
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -215,6 +221,8 @@ nonisolated struct LayoutLibrary: Codable, Equatable, Sendable {
         case dragTargetPlacement
         case showAllDragTargets
         case showAllTopDragTargets
+        case experimentalSpaceMovementEnabled
+        case missionControlSpaceShortcutsConfirmed
     }
 
     init(from decoder: Decoder) throws {
@@ -271,6 +279,14 @@ nonisolated struct LayoutLibrary: Codable, Equatable, Sendable {
         showAllTopDragTargets = try container.decodeIfPresent(
             Bool.self,
             forKey: .showAllTopDragTargets
+        ) ?? false
+        experimentalSpaceMovementEnabled = try container.decodeIfPresent(
+            Bool.self,
+            forKey: .experimentalSpaceMovementEnabled
+        ) ?? false
+        missionControlSpaceShortcutsConfirmed = try container.decodeIfPresent(
+            Bool.self,
+            forKey: .missionControlSpaceShortcutsConfirmed
         ) ?? false
     }
 
@@ -343,6 +359,10 @@ nonisolated struct LayoutLibrary: Codable, Equatable, Sendable {
             do {
                 validatedShortcut = try shortcut.validated()
             } catch {
+                throw LayoutLibraryValidationError.invalidShortcut
+            }
+            if actionID.hasPrefix("space."),
+               validatedShortcut.isMissionControlSpaceNavigationShortcut {
                 throw LayoutLibraryValidationError.invalidShortcut
             }
             guard usedShortcuts.insert(validatedShortcut.identity).inserted else {
