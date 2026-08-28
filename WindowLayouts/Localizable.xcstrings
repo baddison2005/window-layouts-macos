@@ -4,6 +4,49 @@
     "%@ applied." : {
 
     },
+    "Changes take effect after you choose Apply." : {
+
+    },
+    "Custom Layout Transfer Failed" : {
+
+    },
+    "Custom layouts exported." : {
+
+    },
+    "Custom layouts imported. Click Apply to save." : {
+
+    },
+    "Export Custom Layouts" : {
+
+    },
+    "Export…" : {
+
+    },
+    "Import Custom Layouts" : {
+
+    },
+    "Import…" : {
+
+    },
+    "OK" : {
+
+    },
+    "Replace" : {
+
+    },
+    "Replace Custom Layouts?" : {
+
+    },
+    "This will replace the current custom layouts and groups in this Settings draft with %lld layouts and %lld groups. Changes are not saved until you click Apply." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "This will replace the current custom layouts and groups in this Settings draft with %1$lld layouts and %2$lld groups. Changes are not saved until you click Apply."
+          }
+        }
+      }
+    },
     "%@: %@" : {
       "localizations" : {
         "en" : {

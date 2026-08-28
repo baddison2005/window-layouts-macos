@@ -103,6 +103,47 @@ nonisolated struct LayoutGroup: Codable, Equatable, Identifiable, Sendable {
     }
 }
 
+nonisolated struct CustomLayoutArchive: Codable, Equatable, Sendable {
+    static let currentSchemaVersion = 1
+
+    var schemaVersion: Int
+    var customLayouts: [LayoutDefinition]
+    var customGroups: [LayoutGroup]
+
+    init(
+        schemaVersion: Int = Self.currentSchemaVersion,
+        customLayouts: [LayoutDefinition],
+        customGroups: [LayoutGroup]
+    ) {
+        self.schemaVersion = schemaVersion
+        self.customLayouts = customLayouts
+        self.customGroups = customGroups
+    }
+
+    init(library: LayoutLibrary) {
+        self.init(
+            customLayouts: library.customLayouts,
+            customGroups: library.customGroups
+        )
+    }
+
+    func applying(to library: LayoutLibrary) throws -> LayoutLibrary {
+        guard schemaVersion == Self.currentSchemaVersion else {
+            throw LayoutLibraryValidationError.unsupportedSchemaVersion(schemaVersion)
+        }
+
+        var result = library
+        result.customLayouts = customLayouts
+        result.customGroups = customGroups
+
+        let validActionIDs = Set(
+            ShortcutActionCatalog.descriptors(for: result).map(\.id.rawValue)
+        )
+        result.shortcuts = result.shortcuts.filter { validActionIDs.contains($0.key) }
+        return try result.validated()
+    }
+}
+
 nonisolated enum LayoutLibraryValidationError: Error, Equatable, LocalizedError, Sendable {
     case unsupportedSchemaVersion(Int)
     case tooManyLayouts(Int)

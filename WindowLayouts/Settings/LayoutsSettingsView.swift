@@ -1,11 +1,16 @@
 // SPDX-FileCopyrightText: 2026 Window Layouts contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+import AppKit
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct LayoutsSettingsView: View {
     @Binding var library: LayoutLibrary
     @State private var selectedLayoutID: UUID?
+    @State private var transferAlert: LayoutTransferAlert?
+    @State private var pendingImport: CustomLayoutArchive?
+    @State private var transferStatus: String?
 
     private var selectedIndex: Int? {
         guard let selectedLayoutID else { return nil }
@@ -71,6 +76,24 @@ struct LayoutsSettingsView: View {
                     .disabled(adjacentLayoutIndex(offset: 1) == nil)
                 }
 
+                Divider()
+
+                HStack {
+                    Button("Import…", systemImage: "square.and.arrow.down") {
+                        chooseArchiveToImport()
+                    }
+
+                    Button("Export…", systemImage: "square.and.arrow.up") {
+                        exportArchive()
+                    }
+                }
+
+                if let transferStatus {
+                    Text(transferStatus)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
                 Text("\(library.customLayouts.count) of \(LayoutLibrary.maximumCustomLayouts) layouts")
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -98,6 +121,29 @@ struct LayoutsSettingsView: View {
         }
         .onChange(of: library.customLayouts.map(\.id)) {
             selectFirstLayoutIfNeeded()
+        }
+        .alert(item: $transferAlert) { alert in
+            switch alert {
+            case .confirmImport(let layoutCount, let groupCount):
+                Alert(
+                    title: Text("Replace Custom Layouts?"),
+                    message: Text(
+                        "This will replace the current custom layouts and groups in this Settings draft with \(layoutCount) layouts and \(groupCount) groups. Changes are not saved until you click Apply."
+                    ),
+                    primaryButton: .destructive(Text("Replace")) {
+                        applyPendingImport()
+                    },
+                    secondaryButton: .cancel {
+                        pendingImport = nil
+                    }
+                )
+            case .error(let message):
+                Alert(
+                    title: Text("Custom Layout Transfer Failed"),
+                    message: Text(message),
+                    dismissButton: .default(Text("OK"))
+                )
+            }
         }
     }
 
@@ -153,6 +199,78 @@ struct LayoutsSettingsView: View {
             return
         }
         selectedLayoutID = library.customLayouts.first?.id
+    }
+
+    private func exportArchive() {
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.json]
+        panel.canCreateDirectories = true
+        panel.nameFieldStringValue = "Window Layouts Custom Layouts.json"
+        panel.title = String(localized: "Export Custom Layouts")
+
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+
+        do {
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
+            let data = try encoder.encode(CustomLayoutArchive(library: library))
+            try data.write(to: url, options: .atomic)
+            transferStatus = String(localized: "Custom layouts exported.")
+        } catch {
+            transferAlert = .error(error.localizedDescription)
+        }
+    }
+
+    private func chooseArchiveToImport() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.json]
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = false
+        panel.title = String(localized: "Import Custom Layouts")
+
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+
+        do {
+            let archive = try JSONDecoder().decode(
+                CustomLayoutArchive.self,
+                from: Data(contentsOf: url)
+            )
+            _ = try archive.applying(to: library)
+            pendingImport = archive
+            transferAlert = .confirmImport(
+                layoutCount: archive.customLayouts.count,
+                groupCount: archive.customGroups.count
+            )
+        } catch {
+            transferAlert = .error(error.localizedDescription)
+        }
+    }
+
+    private func applyPendingImport() {
+        guard let pendingImport else { return }
+        do {
+            library = try pendingImport.applying(to: library)
+            selectedLayoutID = library.customLayouts.first?.id
+            transferStatus = String(localized: "Custom layouts imported. Click Apply to save.")
+            self.pendingImport = nil
+        } catch {
+            self.pendingImport = nil
+            transferAlert = .error(error.localizedDescription)
+        }
+    }
+}
+
+private enum LayoutTransferAlert: Identifiable {
+    case confirmImport(layoutCount: Int, groupCount: Int)
+    case error(String)
+
+    var id: String {
+        switch self {
+        case .confirmImport(let layoutCount, let groupCount):
+            "confirm-\(layoutCount)-\(groupCount)"
+        case .error(let message):
+            "error-\(message)"
+        }
     }
 }
 

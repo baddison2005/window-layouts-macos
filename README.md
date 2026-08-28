@@ -16,6 +16,8 @@ It has no third-party dependencies, telemetry, or analytics.
   maximize, and restore them.
 - Create up to 20 custom layouts on a flexible 24 × 12 grid and organize them
   into named, reorderable groups.
+- Export custom layouts and groups to a portable JSON file, then import them on
+  another Mac or after reinstalling macOS.
 - Move windows between displays while preserving recognized layouts or
   proportional free-form positioning.
 - Fill a target display with all eligible visible windows using a built-in or
@@ -76,6 +78,12 @@ Settings → Privacy & Security → Accessibility**.
 
 Settings changes remain in a draft until **Apply** is selected. **Cancel** or
 closing the Settings window discards unapplied changes.
+
+To transfer custom layouts, open **Configure Window Layouts… → Layouts** and
+choose **Export…**. On the destination Mac, choose **Import…**, review the
+replacement confirmation, and select **Apply**. Import replaces only the custom
+layouts and groups in the current Settings draft; unrelated preferences and
+valid shortcuts are preserved.
 
 The green-button panel, Dock icon, and drag targets are disabled by default and
 can be enabled under **General**. The menu bar remains available as an emergency
