@@ -35,6 +35,49 @@ It has no third-party dependencies, telemetry, or analytics.
 - Save the layout library safely in Application Support, with automatic
   fallback to defaults if the saved file becomes unreadable.
 
+## Feature tour
+
+### Apply layouts from anywhere
+
+| Menu bar | Green-button panel | Dock menu |
+| --- | --- | --- |
+| ![Window Layouts menu-bar menu with layout and monitor movement actions](screenshots/Window_Layouts_panel_icon_with_window_movement_options.png) | ![Window Layouts panel displayed beside a window's green button](screenshots/Green_button_hover_menu_with_layout_targets.png) | ![Window Layouts Dock menu with layout actions](screenshots/Window_Layouts_Dock_Icon_and_window_movements.png) |
+| The always-available menu-bar item applies layouts, moves windows between displays, fills a display, and provides the emergency overlay controls. | Optionally hover over a window's green button to open a visual layout chooser without modifying the title bar. | Enable the Dock icon to access layouts and window actions from its standard macOS context menu. |
+
+### Create a workspace that fits you
+
+| Custom layouts | Custom groups |
+| --- | --- |
+| ![Custom layout editor with the grid and JSON import and export controls](screenshots/Custom_layout_configuration_and_import_export_layouts.png) | ![Custom layout groups and configurable menu group order](screenshots/Custom_groups_and_group_order.png) |
+| Draw layouts on a flexible 24 × 12 grid, assign them to groups, and import or export the collection as portable JSON. | Organize custom layouts into named groups and reorder both custom groups and the main menu sections. |
+
+| Keyboard shortcuts | General controls | About and updates |
+| --- | --- | --- |
+| ![Keyboard shortcut configuration for layouts and display movement](screenshots/Keyboard_shortcuts_for_layouts_monitor_movement.png) | ![General settings for padding, the green-button panel, and drag targets](screenshots/General_settings_Window_Layouts.png) | ![About tab showing app information and the secure update checker](screenshots/About_tab_and_update_checker.png) |
+| Assign global shortcuts to fixed and custom layouts, monitor movement, display filling, and other window actions. | Tune edge-aware padding and enable the optional green-button panel, Dock icon, or input-transparent drag targets. | Review the installed version and author information, visit the source repository, and securely check for signed stable updates. |
+
+### Arrange windows by dragging
+
+![Layout targets displayed immediately across multiple application windows](screenshots/Layout_targets_shown_immidiately_when_dragging_window.png)
+
+Immediate mode displays the available drop targets as soon as a window begins
+moving, placing each target according to the layout it represents.
+
+![A single proximity layout target and its live placement preview](screenshots/Proximity_layout_target_for_window.png)
+
+Proximity mode keeps the interface quiet until the pointer approaches a target,
+then shows a live preview of the window's destination.
+
+![Multiple proximity layout targets and a live placement preview](screenshots/Proximity_multiple_layout_targets.png)
+
+Related layouts can appear as a compact target stack, revealing more choices
+only when they are needed.
+
+![A top panel containing layout targets with an active placement preview](screenshots/Layout_placement_targets_top_panel_area.png)
+
+The optional top panel gathers layouts into one compact chooser while the
+input-transparent preview shows the exact area the dragged window will occupy.
+
 ## Requirements
 
 - macOS 14.6 or later.
