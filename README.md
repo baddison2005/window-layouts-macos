@@ -107,6 +107,25 @@ expand the ZIP, move **Window Layouts.app** into `/Applications`, and launch it
 from there. When upgrading, quit the installed app before replacing it. Window
 Layouts never asks users to bypass Gatekeeper or disable macOS security.
 
+### Homebrew
+
+Window Layouts is also available from the project's Homebrew tap:
+
+```bash
+brew tap baddison2005/tap
+brew install --cask window-layouts
+```
+
+Use `brew update` followed by `brew upgrade --cask window-layouts` to install a
+new release through Homebrew.
+
+### MacPorts
+
+A Window Layouts port has been
+[submitted to MacPorts](https://github.com/macports/macports-ports/pull/34326).
+Installation instructions will be added here once the port has passed upstream
+review and entered the MacPorts ports index.
+
 Window Layouts does not use private APIs or attempt to bypass macOS privacy
 controls. Grant access only through the app's onboarding prompt or in **System
 Settings → Privacy & Security → Accessibility**.
