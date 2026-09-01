@@ -10,6 +10,14 @@ displays.
 Window Layouts is built with SwiftUI and AppKit and uses only public macOS APIs.
 It has no third-party dependencies, telemetry, or analytics.
 
+## Video tour
+
+[![Watch the Window Layouts for macOS video tour](https://img.youtube.com/vi/6wLCbmWimqQ/maxresdefault.jpg)](https://youtu.be/6wLCbmWimqQ)
+
+Watch the [Window Layouts for macOS video tour](https://youtu.be/6wLCbmWimqQ)
+for a guided demonstration of layouts, custom groups, keyboard shortcuts,
+multi-display workflows, drag targets, and configuration options.
+
 ## Features
 
 - Arrange windows into halves, quarters, thirds, and two-thirds, or center,
