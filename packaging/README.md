@@ -1,8 +1,8 @@
 # Package-manager definitions
 
-These definitions install the same signed and notarized universal application
-published on the Window Layouts GitHub Releases page. They do not rebuild or
-re-sign the application.
+The Homebrew cask installs the signed and notarized universal application from
+the Window Layouts GitHub Releases page. The MacPorts definition follows
+MacPorts policy by compiling the application from the tagged source archive.
 
 ## MacPorts
 
@@ -30,6 +30,10 @@ sudo port install window-layouts
 
 MacPorts installs Aqua applications under its configured
 `applications_dir`, normally `/Applications/MacPorts`.
+
+The MacPorts build uses the Xcode port group, disables developer signing during
+compilation, and applies a local ad-hoc signature after staging the application.
+It does not download or install the prebuilt DMG.
 
 ## Homebrew
 
@@ -63,10 +67,11 @@ dynamic package code that downloads an unchecked “latest” asset.
 
 For every stable Window Layouts release:
 
-1. Publish and test the signed, notarized DMG.
+1. Publish and test the signed, notarized DMG and tag the matching source.
 2. Set `version` in both definitions.
-3. Set the DMG's SHA-256 digest in both definitions.
-4. Set its RIPEMD-160 digest and byte size in the Portfile.
+3. Set the DMG's SHA-256 digest in the Homebrew cask.
+4. Set the tagged source archive's SHA-256 and RIPEMD-160 digests and byte size
+   in the Portfile.
 5. Run the validation commands above.
 6. Update the Homebrew tap and submit a MacPorts update pull request.
 
