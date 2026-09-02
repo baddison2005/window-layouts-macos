@@ -10,6 +10,11 @@ displays.
 Window Layouts is built with SwiftUI and AppKit and uses only public macOS APIs.
 It has no third-party dependencies, telemetry, or analytics.
 
+Window Layouts was developed by Dr. Brett Addison with substantial assistance
+from OpenAI's Codex. Dr. Addison directed the application design, requirements,
+testing, and releases, while Codex assisted with code implementation,
+debugging, documentation, and packaging.
+
 ## Video tour
 
 [![Watch the Window Layouts for macOS video tour](https://img.youtube.com/vi/6wLCbmWimqQ/maxresdefault.jpg)](https://youtu.be/6wLCbmWimqQ)
