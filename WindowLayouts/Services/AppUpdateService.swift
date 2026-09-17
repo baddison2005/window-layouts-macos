@@ -44,6 +44,60 @@ nonisolated struct AvailableAppUpdate: Equatable, Sendable {
     let sha256: String
 }
 
+nonisolated enum AppUpdateProduct: Equatable, Sendable {
+    case stable
+    case experimental
+
+    static func current(bundleIdentifier: String? = Bundle.main.bundleIdentifier) -> Self {
+        bundleIdentifier == "com.astrobrett.WindowLayouts.Experimental" ? .experimental : .stable
+    }
+
+    var tagSuffix: String {
+        switch self {
+        case .stable: ""
+        case .experimental: "-experimental"
+        }
+    }
+
+    var artifactPrefix: String {
+        switch self {
+        case .stable: "Window-Layouts"
+        case .experimental: "Window-Layouts-Experimental"
+        }
+    }
+
+    var applicationName: String {
+        switch self {
+        case .stable: "Window Layouts"
+        case .experimental: "Window Layouts Experimental"
+        }
+    }
+
+    var bundleIdentifier: String {
+        switch self {
+        case .stable: "com.astrobrett.WindowLayouts"
+        case .experimental: "com.astrobrett.WindowLayouts.Experimental"
+        }
+    }
+
+    func version(from tag: String) -> SemanticVersion? {
+        guard tag.hasPrefix("v"), tag.hasSuffix(tagSuffix) else { return nil }
+        let end = tag.index(tag.endIndex, offsetBy: -tagSuffix.count)
+        let versionText = String(tag[tag.index(after: tag.startIndex)..<end])
+        guard let version = SemanticVersion(versionText),
+              tag == "v\(version)\(tagSuffix)" else { return nil }
+        return version
+    }
+
+    func tag(for version: SemanticVersion) -> String {
+        "v\(version)\(tagSuffix)"
+    }
+
+    func archiveName(for version: SemanticVersion) -> String {
+        "\(artifactPrefix)-\(version)-macOS.zip"
+    }
+}
+
 nonisolated enum AppUpdateAvailability: Equatable, Sendable {
     case upToDate(latestVersion: SemanticVersion)
     case available(AvailableAppUpdate)
@@ -106,18 +160,20 @@ actor GitHubAppUpdateService {
     static let repositoryURL = URL(
         string: "https://github.com/baddison2005/window-layouts-macos"
     )!
-    static let latestReleaseURL = URL(
-        string: "https://api.github.com/repos/baddison2005/window-layouts-macos/releases/latest"
+    static let releasesURL = URL(
+        string: "https://api.github.com/repos/baddison2005/window-layouts-macos/releases?per_page=100"
     )!
 
     private let session: URLSession
+    private let product: AppUpdateProduct
 
-    init(session: URLSession = .shared) {
+    init(session: URLSession = .shared, product: AppUpdateProduct = .stable) {
         self.session = session
+        self.product = product
     }
 
     func check(currentVersion: SemanticVersion) async throws -> AppUpdateAvailability {
-        var request = URLRequest(url: Self.latestReleaseURL)
+        var request = URLRequest(url: Self.releasesURL)
         request.timeoutInterval = 12
         request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
         request.setValue("2022-11-28", forHTTPHeaderField: "X-GitHub-Api-Version")
@@ -129,22 +185,33 @@ actor GitHubAppUpdateService {
               data.count <= 1_000_000 else {
             throw AppUpdateError.invalidResponse
         }
-        let release: GitHubRelease
+        let releases: [GitHubRelease]
         do {
-            release = try JSONDecoder().decode(GitHubRelease.self, from: data)
+            releases = try JSONDecoder().decode([GitHubRelease].self, from: data)
         } catch {
             throw AppUpdateError.invalidResponse
         }
-        return try Self.availability(for: release, currentVersion: currentVersion)
+        guard let release = releases
+            .filter({ !$0.draft && !$0.prerelease && product.version(from: $0.tagName) != nil })
+            .max(by: {
+                product.version(from: $0.tagName)! < product.version(from: $1.tagName)!
+            }) else {
+            throw AppUpdateError.invalidRelease
+        }
+        return try Self.availability(
+            for: release,
+            currentVersion: currentVersion,
+            product: product
+        )
     }
 
     nonisolated static func availability(
         for release: GitHubRelease,
-        currentVersion: SemanticVersion
+        currentVersion: SemanticVersion,
+        product: AppUpdateProduct = .stable
     ) throws -> AppUpdateAvailability {
         guard !release.draft, !release.prerelease,
-              let releaseVersion = SemanticVersion(release.tagName),
-              release.tagName == "v\(releaseVersion)" else {
+              let releaseVersion = product.version(from: release.tagName) else {
             throw AppUpdateError.invalidRelease
         }
         guard release.pageURL.scheme == "https",
@@ -156,7 +223,7 @@ actor GitHubAppUpdateService {
             return .upToDate(latestVersion: releaseVersion)
         }
 
-        let expectedName = "Window-Layouts-\(releaseVersion)-macOS.zip"
+        let expectedName = product.archiveName(for: releaseVersion)
         guard let archive = release.assets.first(where: {
             $0.name == expectedName && $0.contentType == "application/zip"
         }) else {
@@ -204,12 +271,19 @@ actor AppUpdateInstaller {
     static let maximumArchiveSize = 50_000_000
     static let pendingBackupDefaultsKey = "pendingAppUpdateBackupPath"
 
-    private static let expectedBundleIdentifier = "com.astrobrett.WindowLayouts"
     private static let expectedTeamIdentifier = "SRNLN9U724"
-    private static let installedApplicationURL = URL(
-        fileURLWithPath: "/Applications/Window Layouts.app",
-        isDirectory: true
-    )
+    private let product: AppUpdateProduct
+
+    init(product: AppUpdateProduct = .stable) {
+        self.product = product
+    }
+
+    private static func installedApplicationURL(for product: AppUpdateProduct) -> URL {
+        URL(
+            fileURLWithPath: "/Applications/\(product.applicationName).app",
+            isDirectory: true
+        )
+    }
 
     func prepare(_ release: AvailableAppUpdate) async throws -> PreparedAppUpdate {
         let fileManager = FileManager.default
@@ -257,12 +331,13 @@ actor AppUpdateInstaller {
                 failure: .extractionFailed
             )
             let applicationURL = extractionURL.appendingPathComponent(
-                "Window Layouts.app",
+                "\(product.applicationName).app",
                 isDirectory: true
             )
             try Self.validateApplication(
                 at: applicationURL,
-                expectedVersion: release.version
+                expectedVersion: release.version,
+                product: product
             )
             return PreparedAppUpdate(
                 release: release,
@@ -281,7 +356,7 @@ actor AppUpdateInstaller {
     ) throws -> InstalledAppUpdate {
         let fileManager = FileManager.default
         let currentURL = currentApplicationURL.resolvingSymlinksInPath().standardizedFileURL
-        guard currentURL == Self.installedApplicationURL,
+        guard currentURL == Self.installedApplicationURL(for: product),
               fileManager.isWritableFile(atPath: currentURL.deletingLastPathComponent().path) else {
             throw AppUpdateError.automaticInstallationUnavailable
         }
@@ -292,14 +367,15 @@ actor AppUpdateInstaller {
             appropriateFor: nil,
             create: true
         ).appendingPathComponent("com.astrobrett.WindowLayouts/Updates", isDirectory: true)
+            .appendingPathComponent(product == .stable ? "Stable" : "Experimental", isDirectory: true)
         try fileManager.createDirectory(at: cacheRoot, withIntermediateDirectories: true)
         let identifier = UUID().uuidString
         let backupURL = cacheRoot.appendingPathComponent(
-            "Window Layouts-previous-\(identifier).app",
+            "\(product.applicationName)-previous-\(identifier).app",
             isDirectory: true
         )
         let stagedURL = currentURL.deletingLastPathComponent().appendingPathComponent(
-            ".Window Layouts-update-\(identifier).app",
+            ".\(product.applicationName)-update-\(identifier).app",
             isDirectory: true
         )
 
@@ -311,14 +387,16 @@ actor AppUpdateInstaller {
             )
             try Self.validateApplication(
                 at: stagedURL,
-                expectedVersion: prepared.release.version
+                expectedVersion: prepared.release.version,
+                product: product
             )
             try fileManager.moveItem(at: currentURL, to: backupURL)
             do {
                 try fileManager.moveItem(at: stagedURL, to: currentURL)
                 try Self.validateApplication(
                     at: currentURL,
-                    expectedVersion: prepared.release.version
+                    expectedVersion: prepared.release.version,
+                    product: product
                 )
             } catch {
                 if fileManager.fileExists(atPath: currentURL.path) {
@@ -364,12 +442,18 @@ actor AppUpdateInstaller {
         )
     }
 
-    static func supportsAutomaticInstallation(at applicationURL: URL) -> Bool {
+    static func supportsAutomaticInstallation(
+        at applicationURL: URL,
+        product: AppUpdateProduct = .stable
+    ) -> Bool {
         applicationURL.resolvingSymlinksInPath().standardizedFileURL
-            == installedApplicationURL
+            == installedApplicationURL(for: product)
     }
 
-    static func cleanPendingBackup(defaults: UserDefaults = .standard) {
+    static func cleanPendingBackup(
+        defaults: UserDefaults = .standard,
+        product: AppUpdateProduct = .current()
+    ) {
         guard let path = defaults.string(forKey: pendingBackupDefaultsKey) else { return }
         defaults.removeObject(forKey: pendingBackupDefaultsKey)
 
@@ -383,24 +467,28 @@ actor AppUpdateInstaller {
         let allowedRoot = caches.appendingPathComponent(
             "com.astrobrett.WindowLayouts/Updates",
             isDirectory: true
+        ).appendingPathComponent(
+            product == .stable ? "Stable" : "Experimental",
+            isDirectory: true
         ).resolvingSymlinksInPath().standardizedFileURL
         let candidate = URL(fileURLWithPath: path, isDirectory: true)
             .resolvingSymlinksInPath().standardizedFileURL
         guard candidate.deletingLastPathComponent() == allowedRoot,
-              candidate.lastPathComponent.hasPrefix("Window Layouts-previous-"),
+              candidate.lastPathComponent.hasPrefix("\(product.applicationName)-previous-"),
               candidate.pathExtension == "app" else { return }
         try? fileManager.removeItem(at: candidate)
     }
 
     private static func validateApplication(
         at applicationURL: URL,
-        expectedVersion: SemanticVersion
+        expectedVersion: SemanticVersion,
+        product: AppUpdateProduct
     ) throws {
         let infoURL = applicationURL.appendingPathComponent("Contents/Info.plist")
         guard let data = try? Data(contentsOf: infoURL),
               let plist = try? PropertyListSerialization.propertyList(from: data, format: nil),
               let info = plist as? [String: Any],
-              info["CFBundleIdentifier"] as? String == expectedBundleIdentifier,
+              info["CFBundleIdentifier"] as? String == product.bundleIdentifier,
               let versionString = info["CFBundleShortVersionString"] as? String,
               SemanticVersion(versionString) == expectedVersion else {
             throw AppUpdateError.invalidApplication
@@ -416,7 +504,7 @@ actor AppUpdateInstaller {
             throw AppUpdateError.signatureRejected
         }
 
-        let requirementText = "anchor apple generic and identifier \"\(expectedBundleIdentifier)\" and certificate leaf[subject.OU] = \"\(expectedTeamIdentifier)\""
+        let requirementText = "anchor apple generic and identifier \"\(product.bundleIdentifier)\" and certificate leaf[subject.OU] = \"\(expectedTeamIdentifier)\""
         var requirement: SecRequirement?
         guard SecRequirementCreateWithString(
             requirementText as CFString,

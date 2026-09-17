@@ -6,12 +6,22 @@ KWin/QML code.
 - `Geometry/` is nonisolated, platform-neutral logic for normalized rectangles,
   fixed layouts, edge-aware padding, coordinate conversion, and monitor
   transfer.
-- `LayoutLibrary` schema 5 is the versioned Codable document for custom layouts,
+- `LayoutLibrary` schema 6 is the versioned Codable document for custom layouts,
   custom groups, menu group order, padding, stable shortcut assignments, and the
   launch-at-login, green-button-panel, and drag-target preferences. Older documents migrate
   in memory with safe defaults. Decoding and pre-save validation reject invalid
   geometry, duplicate identifiers or shortcut combinations, broken references,
   unknown actions or menu groups, and more than 20 custom layouts.
+- `ApplicationLaunchMappingController` observes public `NSWorkspace`
+  application launch and termination notifications. It ignores helpers,
+  applications without bundle identifiers, launches while another regular
+  instance of the same application is already running, and every launch during
+  a 30-second process-start grace period. This prevents interference with
+  macOS login restoration. A mapping stores the application bundle identifier,
+  a fixed/custom layout reference, and a persistent public Core Graphics
+  display UUID (with a unique display-name fallback). Optional document mode
+  waits until an eligible AX window exposes document semantics before applying
+  the mapping, which accommodates document-chooser launches.
 - `LayoutLibraryPersistence` atomically stores the library in Application
   Support. Invalid or corrupt input returns safe in-memory defaults without a
   repair write, preserving the original bytes for diagnosis or recovery.
@@ -61,9 +71,11 @@ KWin/QML code.
   `SMAppService.mainApp`. Enabled, disabled, approval-required, unavailable, and
   recoverable failure states remain explicit and are tested with a fake system
   client.
-- `GitHubAppUpdateService` checks GitHub's unauthenticated latest stable release
-  endpoint only when requested from About. It accepts a strict numeric release
-  tag and the exact repository ZIP asset path, enforces a 50 MB limit, and
+- `GitHubAppUpdateService` checks GitHub's unauthenticated release list only
+  when requested from About. Stable and experimental products use distinct,
+  strictly parsed tag and artifact names, so neither channel can offer or
+  install the other product. It accepts the exact repository ZIP asset path,
+  enforces a 50 MB limit, and
   requires GitHub's SHA-256 digest. `AppUpdateInstaller` verifies that digest,
   the expected bundle identifier and version, all signed architectures, the
   Developer ID team requirement, nested code, strict bundle structure, and a

@@ -38,6 +38,8 @@ multi-display workflows, drag targets, and configuration options.
 - Assign configurable global keyboard shortcuts to layouts, groups, window
   actions, and display actions.
 - Adjust edge-aware padding from 0 to 200 logical points.
+- Map an application to a built-in or custom layout on a specific display so
+  its first eligible window is placed automatically after a fresh launch.
 - Access layouts from the menu bar and, optionally, from the Dock menu.
 - Enable an optional layout panel near a window's green button without
   modifying the title bar or replacing Apple's window controls.
@@ -150,6 +152,16 @@ Settings → Privacy & Security → Accessibility**.
 3. Choose a layout to apply it to the window named at the top of the menu.
 4. Choose **Configure Window Layouts…** to customize layouts, groups, padding,
    shortcuts, and optional controls.
+
+To place newly launched applications automatically, open **Configure Window
+Layouts… → Applications**, add an application, then choose its layout and
+display. Window Layouts waits through an initial startup grace period so it
+does not rearrange windows restored by macOS at login. It also acts only when
+the application was previously closed; opening additional windows in an
+already-running application does not trigger the mapping. For applications
+such as Microsoft Word or Excel that initially show a document chooser, select
+**Wait for a document window** so placement occurs after a file is opened or a
+new document is created.
 
 Settings changes remain in a draft until **Apply** is selected. **Cancel** or
 closing the Settings window discards unapplied changes.

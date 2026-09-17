@@ -6,8 +6,24 @@ import CoreGraphics
 
 nonisolated struct ScreenSnapshot: Equatable, Sendable {
     let id: String
+    let persistentID: String
+    let name: String
     let frame: CGRect
     let visibleFrame: CGRect
+
+    init(
+        id: String,
+        persistentID: String? = nil,
+        name: String? = nil,
+        frame: CGRect,
+        visibleFrame: CGRect
+    ) {
+        self.id = id
+        self.persistentID = persistentID ?? id
+        self.name = name ?? id
+        self.frame = frame
+        self.visibleFrame = visibleFrame
+    }
 }
 
 @MainActor
@@ -22,8 +38,17 @@ enum ScreenService {
         return screens.enumerated().map { index, screen in
             let numberKey = NSDeviceDescriptionKey("NSScreenNumber")
             let screenNumber = screen.deviceDescription[numberKey] as? NSNumber
+            let displayID = CGDirectDisplayID(screenNumber?.uint32Value ?? 0)
+            let persistentID: String
+            if let displayUUID = CGDisplayCreateUUIDFromDisplayID(displayID)?.takeRetainedValue() {
+                persistentID = CFUUIDCreateString(nil, displayUUID) as String
+            } else {
+                persistentID = screenNumber?.stringValue ?? "screen-\(index)"
+            }
             return ScreenSnapshot(
                 id: screenNumber?.stringValue ?? "screen-\(index)",
+                persistentID: persistentID,
+                name: screen.localizedName,
                 frame: converter.accessibilityRect(fromAppKit: screen.frame),
                 visibleFrame: converter.accessibilityRect(fromAppKit: screen.visibleFrame)
             )
@@ -165,6 +190,18 @@ nonisolated enum ScreenGeometryResolver {
         let wrappedIndex = (currentIndex + offset % ordered.count + ordered.count)
             % ordered.count
         return ordered[wrappedIndex]
+    }
+
+    static func mappedScreen(
+        persistentID: String,
+        fallbackName: String,
+        among screens: [ScreenSnapshot]
+    ) -> ScreenSnapshot? {
+        if let exact = screens.first(where: { $0.persistentID == persistentID }) {
+            return exact
+        }
+        let named = screens.filter { $0.name == fallbackName }
+        return named.count == 1 ? named[0] : nil
     }
 
     private static func intersectionArea(_ first: CGRect, _ second: CGRect) -> CGFloat {

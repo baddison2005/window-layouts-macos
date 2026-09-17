@@ -22,6 +22,7 @@ struct LayoutLibraryTests {
         #expect(library.dragTargetPlacement == .zones)
         #expect(!library.showAllDragTargets)
         #expect(!library.showAllTopDragTargets)
+        #expect(library.applicationWindowMappings.isEmpty)
         #expect(library.orderedMenuGroups == MenuGroupIdentifier.allCases)
     }
 
@@ -63,6 +64,39 @@ struct LayoutLibraryTests {
         #expect(decoded == archive)
         #expect(decoded.customLayouts[0].id == layout.id)
         #expect(decoded.customGroups[0].id == group.id)
+    }
+
+    @Test func applicationMappingsRoundTripAndResolveLayouts() throws {
+        let custom = LayoutDefinition(name: "Writing", normalizedRect: half)
+        let mappings = [
+            ApplicationWindowMapping(
+                bundleIdentifier: "com.example.Browser",
+                applicationName: "Browser",
+                layout: .fixed(.rightHalf),
+                displayIdentifier: "display-one",
+                displayName: "Studio Display"
+            ),
+            ApplicationWindowMapping(
+                bundleIdentifier: "com.example.Editor",
+                applicationName: "Editor",
+                layout: .custom(custom.id),
+                displayIdentifier: "display-two",
+                displayName: "Built-in Display",
+                windowRequirement: .documentWindow
+            ),
+        ]
+        let original = try LayoutLibrary(
+            customLayouts: [custom],
+            applicationWindowMappings: mappings
+        ).validated()
+
+        let data = try JSONEncoder().encode(original)
+        let decoded = try JSONDecoder().decode(LayoutLibrary.self, from: data).validated()
+
+        #expect(decoded == original)
+        #expect(decoded.applicationWindowMappings[0].layout.action(in: decoded) == .fixed(.rightHalf))
+        #expect(decoded.applicationWindowMappings[1].layout.action(in: decoded) == .custom(custom))
+        #expect(decoded.applicationWindowMappings[1].windowRequirement == .documentWindow)
     }
 
     @Test func importingCustomLayoutArchivePreservesOtherSettingsAndValidShortcuts() throws {
@@ -114,6 +148,37 @@ struct LayoutLibraryTests {
         #expect(imported.shortcuts["fixed.leftHalf"] == fixedShortcut)
         #expect(imported.shortcuts[oldLayout.shortcutActionID.rawValue] == nil)
         #expect(imported.shortcuts[importedLayout.shortcutActionID.rawValue] == importedShortcut)
+    }
+
+    @Test func importingCustomLayoutsRemovesOnlyMappingsForMissingCustomLayouts() throws {
+        let oldLayout = LayoutDefinition(name: "Old", normalizedRect: half)
+        let importedLayout = LayoutDefinition(name: "Imported", normalizedRect: half)
+        let fixedMapping = ApplicationWindowMapping(
+            bundleIdentifier: "com.example.Fixed",
+            applicationName: "Fixed",
+            layout: .fixed(.leftHalf),
+            displayIdentifier: "display",
+            displayName: "Display"
+        )
+        let staleMapping = ApplicationWindowMapping(
+            bundleIdentifier: "com.example.Custom",
+            applicationName: "Custom",
+            layout: .custom(oldLayout.id),
+            displayIdentifier: "display",
+            displayName: "Display"
+        )
+        let library = LayoutLibrary(
+            customLayouts: [oldLayout],
+            applicationWindowMappings: [fixedMapping, staleMapping]
+        )
+        let archive = CustomLayoutArchive(
+            customLayouts: [importedLayout],
+            customGroups: []
+        )
+
+        let imported = try archive.applying(to: library)
+
+        #expect(imported.applicationWindowMappings == [fixedMapping])
     }
 
     @Test func customLayoutArchiveRejectsUnsupportedSchema() {
@@ -207,6 +272,7 @@ struct LayoutLibraryTests {
         #expect(!library.dragTargetsEnabled)
         #expect(library.dragTargetPlacement == .zones)
         #expect(library.layoutPadding == 8)
+        #expect(library.applicationWindowMappings.isEmpty)
     }
 
     @Test func shortcutValidationUsesKeyAndModifiersForDuplicateIdentity() {
@@ -257,5 +323,30 @@ struct LayoutLibraryTests {
         let validated = try library.validated()
 
         #expect(validated.shortcuts[group.fillShortcutActionID.rawValue] == shortcut)
+    }
+
+    @Test func applicationMappingValidationRejectsDuplicatesAndMissingLayouts() {
+        let first = ApplicationWindowMapping(
+            bundleIdentifier: "com.example.App",
+            applicationName: "App",
+            layout: .fixed(.leftHalf),
+            displayIdentifier: "display",
+            displayName: "Display"
+        )
+        var duplicate = first
+        duplicate.id = UUID()
+        #expect(throws: LayoutLibraryValidationError.duplicateApplicationBundleIdentifier) {
+            try LayoutLibrary(
+                applicationWindowMappings: [first, duplicate]
+            ).validated()
+        }
+
+        var missingLayout = first
+        missingLayout.layout = .custom(UUID())
+        #expect(throws: LayoutLibraryValidationError.invalidMappedLayout) {
+            try LayoutLibrary(
+                applicationWindowMappings: [missingLayout]
+            ).validated()
+        }
     }
 }
