@@ -115,6 +115,16 @@ previews are nonactivating panels with `ignoresMouseEvents = true`; hidden or
 screen-sized overlay windows cannot accept input. The menu-bar item remains the
 emergency path for disabling optional overlays.
 
+### Terminal window sizing
+
+Terminal may make a window slightly narrower or taller than the requested
+layout because it normally resizes in whole character columns and rows. To let
+Terminal windows conform precisely to layouts, open **Terminal → Settings →
+Profiles**, select each profile you use, choose **Window**, and enable **Smooth
+resize**. The setting applies to new windows, so open a new Terminal window
+after enabling it. See Apple's [Terminal profile window
+settings](https://support.apple.com/en-au/guide/terminal/trmlwindw/mac).
+
 The App Sandbox is disabled because controlling other applications through the
 Accessibility API is central to the prototype. Only artifacts attached to the
 GitHub prerelease should be treated as signed and notarized distribution builds.
