@@ -127,6 +127,7 @@ actor WindowAccessibilityService {
     func perform(
         _ action: WindowAction,
         processIdentifier: pid_t? = nil,
+        destinationScreenID: String? = nil,
         screens: [ScreenSnapshot],
         padding: CGFloat = 0,
         knownLayouts: [NormalizedRect] = FixedLayout.allCases.map(\.normalizedRect)
@@ -145,6 +146,42 @@ actor WindowAccessibilityService {
         try await perform(
             action,
             for: window,
+            destinationScreenID: destinationScreenID,
+            screens: screens,
+            padding: padding,
+            knownLayouts: knownLayouts
+        )
+    }
+
+    func performApplicationMapping(
+        _ action: WindowAction,
+        processIdentifier: pid_t,
+        applicationName: String,
+        windowRequirement: ApplicationWindowRequirement,
+        destinationScreenID: String,
+        screens: [ScreenSnapshot],
+        padding: CGFloat = 0,
+        knownLayouts: [NormalizedRect] = FixedLayout.allCases.map(\.normalizedRect),
+        timeout: Duration = .seconds(600)
+    ) async throws {
+        guard AXIsProcessTrusted() else {
+            throw WindowAccessibilityError.permissionRequired
+        }
+        guard screens.contains(where: { $0.id == destinationScreenID }) else {
+            throw WindowAccessibilityError.noUsableScreen
+        }
+
+        let window = try await waitForMappedWindow(
+            processIdentifier: processIdentifier,
+            applicationName: applicationName,
+            requirement: windowRequirement,
+            timeout: timeout
+        )
+        pruneStaleRestoreEntries()
+        try await perform(
+            action,
+            for: window,
+            destinationScreenID: destinationScreenID,
             screens: screens,
             padding: padding,
             knownLayouts: knownLayouts
@@ -554,6 +591,106 @@ actor WindowAccessibilityService {
             element: element,
             processIdentifier: processIdentifier
         )
+    }
+
+    private func waitForMappedWindow(
+        processIdentifier: pid_t,
+        applicationName: String,
+        requirement: ApplicationWindowRequirement,
+        timeout: Duration
+    ) async throws -> FocusedWindow {
+        guard processIdentifier != ProcessInfo.processInfo.processIdentifier else {
+            throw WindowAccessibilityError.ownApplicationFocused
+        }
+
+        let clock = ContinuousClock()
+        let deadline = clock.now.advanced(by: timeout)
+        let application = AXUIElementCreateApplication(processIdentifier)
+        try check(
+            AXUIElementSetMessagingTimeout(application, Self.messagingTimeout),
+            operation: "setting a mapped application messaging timeout"
+        )
+
+        while clock.now < deadline {
+            try Task.checkCancellation()
+            if let element = mappedWindowCandidate(
+                in: application,
+                applicationName: applicationName,
+                requirement: requirement
+            ) {
+                return FocusedWindow(
+                    element: element,
+                    processIdentifier: processIdentifier
+                )
+            }
+            try await Task.sleep(for: .milliseconds(250))
+        }
+        throw WindowAccessibilityError.targetTimedOut(
+            operation: "waiting for an application window"
+        )
+    }
+
+    private func mappedWindowCandidate(
+        in application: AXUIElement,
+        applicationName: String,
+        requirement: ApplicationWindowRequirement
+    ) -> AXUIElement? {
+        var value: CFTypeRef?
+        let error = AXUIElementCopyAttributeValue(
+            application,
+            kAXWindowsAttribute as CFString,
+            &value
+        )
+        guard error == .success,
+              let windows = value as? [AXUIElement] else {
+            return nil
+        }
+
+        for window in windows {
+            do {
+                try check(
+                    AXUIElementSetMessagingTimeout(window, Self.messagingTimeout),
+                    operation: "setting a mapped window messaging timeout"
+                )
+                try validateEligibility(of: window)
+                if requirement == .documentWindow,
+                   !isDocumentWindow(window, applicationName: applicationName) {
+                    continue
+                }
+                return window
+            } catch {
+                continue
+            }
+        }
+        return nil
+    }
+
+    private func isDocumentWindow(
+        _ window: AXUIElement,
+        applicationName: String
+    ) -> Bool {
+        var names: CFArray?
+        guard AXUIElementCopyAttributeNames(window, &names) == .success,
+              let attributes = names as? [String],
+              attributes.contains(kAXDocumentAttribute as String) else {
+            return false
+        }
+
+        if let document = try? optionalStringAttribute(
+            kAXDocumentAttribute as CFString,
+            of: window
+        ), !document.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return true
+        }
+        guard let title = try? optionalStringAttribute(
+            kAXTitleAttribute as CFString,
+            of: window
+        ) else {
+            return false
+        }
+        let normalizedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        return !normalizedTitle.isEmpty
+            && normalizedTitle.caseInsensitiveCompare(applicationName) != .orderedSame
     }
 
     private func visibleEligibleWindows(

@@ -14,6 +14,7 @@ struct WindowLayoutsApp: App {
     @StateObject private var greenButtonPanelController: GreenButtonPanelController
     @StateObject private var dragTargetController: DragTargetController
     @StateObject private var dockIntegrationController: DockIntegrationController
+    @StateObject private var applicationLaunchMappingController: ApplicationLaunchMappingController
     @Environment(\.openSettings) private var openSettings
 
     init() {
@@ -49,6 +50,12 @@ struct WindowLayoutsApp: App {
         _dockIntegrationController = StateObject(
             wrappedValue: dockIntegrationController
         )
+        _applicationLaunchMappingController = StateObject(
+            wrappedValue: ApplicationLaunchMappingController(
+                settingsStore: settingsStore,
+                windowService: controller.windowService
+            )
+        )
         WindowLayoutsAppDelegate.dockIntegrationController = dockIntegrationController
     }
 
@@ -56,6 +63,7 @@ struct WindowLayoutsApp: App {
         let _ = dockIntegrationController.installOpenSettingsAction {
             openSettings()
         }
+        let _ = applicationLaunchMappingController
 
         MenuBarExtra {
             LayoutMenuView(

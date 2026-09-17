@@ -20,4 +20,8 @@ nonisolated enum AppDiagnostics {
         subsystem: "com.astrobrett.WindowLayouts.Experimental",
         category: "Lifecycle"
     )
+    static let applicationMappings = Logger(
+        subsystem: "com.astrobrett.WindowLayouts.Experimental",
+        category: "ApplicationMappings"
+    )
 }

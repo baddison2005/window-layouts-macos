@@ -3,7 +3,7 @@
 ### Your Workspace, Organized Your Way!
 
 > [!CAUTION]
-> This prerelease contains an unsupported, opt-in prototype for moving a window
+> This experimental edition contains an unsupported, opt-in prototype for moving a window
 > between macOS Spaces. It has a separate app identity and settings library and
 > will not replace or update the stable Window Layouts app.
 
@@ -17,9 +17,9 @@ The app uses SwiftUI, AppKit, the public Accessibility API, and public Quartz
 event APIs. It has no third-party dependencies, telemetry, or analytics. It does
 not use private Spaces APIs or bypass macOS privacy controls.
 
-## Install the experimental prerelease
+## Install the experimental edition
 
-Download either artifact from the GitHub prerelease:
+Download either artifact from the official experimental GitHub release:
 
 - **DMG:** open it and drag **Window Layouts Experimental.app** to Applications.
 - **ZIP:** extract it and move **Window Layouts Experimental.app** to Applications.
@@ -40,7 +40,8 @@ The experimental build uses:
 - bundle identifier `com.astrobrett.WindowLayouts.Experimental`;
 - a separate Application Support directory and settings library;
 - a separate Accessibility/Input Monitoring identity; and
-- no stable-release updater or automatic installer.
+- a separate experimental update channel and automatic installer that can
+  neither offer nor replace the stable app.
 
 Quit the released Window Layouts app while testing this build so two copies do
 not register overlapping shortcuts or react to the same window action.
@@ -77,6 +78,23 @@ macOS. The JSON archive preserves layout and group identifiers. Importing edits
 only the current Settings draft and does not save anything until **Apply** is
 clicked. Preferences and unrelated shortcuts are preserved; shortcuts referring
 to custom items absent from the imported archive are removed.
+
+## Automatic application layouts
+
+Open **Configure Window Layouts Experimental… → Applications** to map an
+application to a built-in or custom layout on a specific display. The mapping
+runs only after a fresh application launch, not when another instance is
+already running. A 30-second startup grace period prevents the feature from
+rearranging windows that macOS restores when Window Layouts launches at login.
+
+For applications such as Microsoft Word and Excel that begin with a file or
+template chooser, select **Wait for a document window**. Window Layouts then
+waits until a file is opened or a new document is created before applying the
+layout.
+
+The About tab checks only official experimental-channel releases. Downloads
+are validated independently from the stable app and retain this edition's
+separate bundle identifier, install path, permissions, and settings.
 
 ## Build and configure
 
@@ -127,7 +145,7 @@ settings](https://support.apple.com/en-au/guide/terminal/trmlwindw/mac).
 
 The App Sandbox is disabled because controlling other applications through the
 Accessibility API is central to the prototype. Only artifacts attached to the
-GitHub prerelease should be treated as signed and notarized distribution builds.
+GitHub experimental release should be treated as signed and notarized distribution builds.
 
 ## Stable and Fedora/KDE editions
 

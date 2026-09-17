@@ -23,6 +23,7 @@ final class AppUpdateController: ObservableObject {
     let currentVersion: SemanticVersion
     let currentBuild: String
     let repositoryURL = GitHubAppUpdateService.repositoryURL
+    let product: AppUpdateProduct
 
     private let updateService: GitHubAppUpdateService
     private let installer: AppUpdateInstaller
@@ -31,9 +32,11 @@ final class AppUpdateController: ObservableObject {
 
     init(
         bundle: Bundle = .main,
-        updateService: GitHubAppUpdateService = GitHubAppUpdateService(),
-        installer: AppUpdateInstaller = AppUpdateInstaller()
+        updateService: GitHubAppUpdateService? = nil,
+        installer: AppUpdateInstaller? = nil
     ) {
+        let product = AppUpdateProduct.current(bundleIdentifier: bundle.bundleIdentifier)
+        self.product = product
         let version = bundle.object(
             forInfoDictionaryKey: "CFBundleShortVersionString"
         ) as? String
@@ -43,8 +46,8 @@ final class AppUpdateController: ObservableObject {
             forInfoDictionaryKey: "CFBundleVersion"
         ) as? String ?? "—"
         self.applicationURL = bundle.bundleURL
-        self.updateService = updateService
-        self.installer = installer
+        self.updateService = updateService ?? GitHubAppUpdateService(product: product)
+        self.installer = installer ?? AppUpdateInstaller(product: product)
     }
 
     deinit {
@@ -52,7 +55,10 @@ final class AppUpdateController: ObservableObject {
     }
 
     var automaticInstallationAvailable: Bool {
-        AppUpdateInstaller.supportsAutomaticInstallation(at: applicationURL)
+        AppUpdateInstaller.supportsAutomaticInstallation(
+            at: applicationURL,
+            product: product
+        )
     }
 
     func checkForUpdates() {

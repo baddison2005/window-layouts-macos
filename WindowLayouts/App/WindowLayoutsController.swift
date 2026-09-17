@@ -14,7 +14,7 @@ final class WindowLayoutsController: ObservableObject {
     @Published private(set) var statusMessage: String?
 
     private let permissionService: AccessibilityPermissionService
-    private let windowService: WindowAccessibilityService
+    let windowService: WindowAccessibilityService
     private let spaceMovementService: SpaceMovementService
     private let settingsStore: SettingsStore
 

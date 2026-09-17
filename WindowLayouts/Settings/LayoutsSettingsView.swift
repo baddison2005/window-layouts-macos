@@ -168,7 +168,11 @@ struct LayoutsSettingsView: View {
     private func removeSelectedLayout() {
         guard let selectedIndex else { return }
         let actionID = library.customLayouts[selectedIndex].shortcutActionID.rawValue
+        let layoutID = library.customLayouts[selectedIndex].id
         library.shortcuts.removeValue(forKey: actionID)
+        library.applicationWindowMappings.removeAll {
+            $0.layout == .custom(layoutID)
+        }
         library.customLayouts.remove(at: selectedIndex)
         selectedLayoutID = library.customLayouts.indices.contains(selectedIndex)
             ? library.customLayouts[selectedIndex].id

@@ -89,6 +89,43 @@ struct AppUpdateServiceTests {
         #expect(!AppUpdateInstaller.supportsAutomaticInstallation(
             at: URL(fileURLWithPath: "/tmp/Window Layouts.app")
         ))
+        #expect(AppUpdateInstaller.supportsAutomaticInstallation(
+            at: URL(fileURLWithPath: "/Applications/Window Layouts Experimental.app"),
+            product: .experimental
+        ))
+    }
+
+    @Test func stableAndExperimentalChannelsRemainSeparate() throws {
+        let experimental = makeRelease(
+            version: "v1.4.0-experimental",
+            archiveName: "Window-Layouts-Experimental-1.4.0-macOS.zip"
+        )
+        let availability = try GitHubAppUpdateService.availability(
+            for: experimental,
+            currentVersion: SemanticVersion("1.3.0")!,
+            product: .experimental
+        )
+        guard case .available(let update) = availability else {
+            Issue.record("Expected an experimental update")
+            return
+        }
+        #expect(update.version == SemanticVersion("1.4.0"))
+        #expect(update.archive.name == "Window-Layouts-Experimental-1.4.0-macOS.zip")
+
+        #expect(throws: AppUpdateError.invalidRelease) {
+            try GitHubAppUpdateService.availability(
+                for: experimental,
+                currentVersion: SemanticVersion("1.3.0")!,
+                product: .stable
+            )
+        }
+        #expect(throws: AppUpdateError.invalidRelease) {
+            try GitHubAppUpdateService.availability(
+                for: makeRelease(version: "v1.4.0"),
+                currentVersion: SemanticVersion("1.3.0")!,
+                product: .experimental
+            )
+        }
     }
 
     private func makeRelease(

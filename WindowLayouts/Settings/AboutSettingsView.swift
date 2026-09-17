@@ -6,6 +6,7 @@ import SwiftUI
 
 struct AboutSettingsView: View {
     @ObservedObject var updateController: AppUpdateController
+    @State private var updateToConfirm: AvailableAppUpdate?
 
     var body: some View {
         ScrollView {
@@ -51,25 +52,46 @@ struct AboutSettingsView: View {
                 }
                 .frame(maxWidth: 500)
 
-                GroupBox("Experimental Build") {
+                GroupBox("Experimental Updates") {
                     VStack(alignment: .leading, spacing: 12) {
-                        Label(
-                            "Space movement is an unsupported, opt-in prototype.",
-                            systemImage: "flask.fill"
-                        )
-                        .foregroundStyle(.orange)
+                        updateStatus
+
+                        HStack {
+                            Button("Check for Updates") {
+                                updateController.checkForUpdates()
+                            }
+                            .disabled(isBusy)
+
+                            if case .available(let release) = updateController.state {
+                                Button(
+                                    updateController.automaticInstallationAvailable
+                                        ? "Download and Install"
+                                        : "View Release"
+                                ) {
+                                    if updateController.automaticInstallationAvailable {
+                                        updateToConfirm = release
+                                    } else {
+                                        updateController.openReleasePage(release)
+                                    }
+                                }
+                                .buttonStyle(.borderedProminent)
+
+                                Link("Release Notes", destination: release.pageURL)
+                            } else if case .failed = updateController.state,
+                                      let release = updateController.lastAvailableUpdate {
+                                Button("View Release") {
+                                    updateController.openReleasePage(release)
+                                }
+                            }
+
+                            Spacer()
+                        }
 
                         Text(
-                            "This build has a separate application identity and settings library. Stable update checks and automatic installation are intentionally unavailable so it cannot replace or modify the released Window Layouts app."
+                            "Only official experimental-channel releases are offered. The stable app has a separate identity and update channel. Downloads are verified using the GitHub SHA-256 digest, application identity, Developer ID signature, and Gatekeeper assessment."
                         )
+                        .font(.caption)
                         .foregroundStyle(.secondary)
-
-                        Link(
-                            "View Stable Window Layouts Releases",
-                            destination: URL(
-                                string: "https://github.com/baddison2005/window-layouts-macos/releases"
-                            )!
-                        )
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(6)
@@ -82,6 +104,78 @@ struct AboutSettingsView: View {
             }
             .frame(maxWidth: .infinity)
             .padding(28)
+        }
+        .confirmationDialog(
+            "Install Window Layouts Experimental \(updateToConfirm?.version.description ?? "")?",
+            isPresented: Binding(
+                get: { updateToConfirm != nil },
+                set: { if !$0 { updateToConfirm = nil } }
+            ),
+            titleVisibility: .visible
+        ) {
+            if let release = updateToConfirm {
+                Button("Download, Install, and Relaunch") {
+                    updateToConfirm = nil
+                    updateController.install(release)
+                }
+            }
+            Button("Cancel", role: .cancel) {
+                updateToConfirm = nil
+            }
+        } message: {
+            Text(
+                "Window Layouts Experimental will verify the download, replace the experimental copy in Applications, and relaunch. Its separate settings will be preserved."
+            )
+        }
+    }
+
+    @ViewBuilder
+    private var updateStatus: some View {
+        switch updateController.state {
+        case .idle:
+            Text("Check GitHub for a newer official experimental release.")
+                .foregroundStyle(.secondary)
+        case .checking:
+            HStack {
+                ProgressView()
+                    .controlSize(.small)
+                Text("Checking for experimental updates…")
+            }
+        case .upToDate:
+            Label(
+                "Window Layouts Experimental \(updateController.currentVersion.description) is up to date.",
+                systemImage: "checkmark.circle.fill"
+            )
+            .foregroundStyle(.green)
+        case .available(let release):
+            Label(
+                "Window Layouts Experimental \(release.version.description) is available.",
+                systemImage: "arrow.down.circle.fill"
+            )
+        case .downloading(let release):
+            HStack {
+                ProgressView()
+                    .controlSize(.small)
+                Text("Downloading Window Layouts Experimental \(release.version.description)…")
+            }
+        case .installing(let release):
+            HStack {
+                ProgressView()
+                    .controlSize(.small)
+                Text("Verifying and installing Window Layouts Experimental \(release.version.description)…")
+            }
+        case .failed(let message):
+            Label(message, systemImage: "exclamationmark.triangle.fill")
+                .foregroundStyle(.orange)
+        }
+    }
+
+    private var isBusy: Bool {
+        switch updateController.state {
+        case .checking, .downloading, .installing:
+            true
+        default:
+            false
         }
     }
 }

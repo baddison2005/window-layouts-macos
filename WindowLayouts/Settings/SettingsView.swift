@@ -55,6 +55,14 @@ struct SettingsView: View {
                     Label("Shortcuts", systemImage: "command")
                 }
 
+                ApplicationMappingsSettingsView(
+                    library: $draft.library,
+                    screens: ScreenService.snapshots()
+                )
+                .tabItem {
+                    Label("Applications", systemImage: "app.badge")
+                }
+
                 GeneralSettingsView(
                     library: $draft.library,
                     controller: controller,
@@ -95,7 +103,7 @@ struct SettingsView: View {
             }
             .padding()
         }
-        .frame(minWidth: 920, idealWidth: 980, minHeight: 680, idealHeight: 740)
+        .frame(minWidth: 960, idealWidth: 1_020, minHeight: 680, idealHeight: 740)
         .onAppear {
             draft.reset(from: settingsStore.library)
             controller.refreshEnvironment()

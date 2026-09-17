@@ -140,6 +140,12 @@ nonisolated struct CustomLayoutArchive: Codable, Equatable, Sendable {
             ShortcutActionCatalog.descriptors(for: result).map(\.id.rawValue)
         )
         result.shortcuts = result.shortcuts.filter { validActionIDs.contains($0.key) }
+        let validCustomLayoutIDs = Set(result.customLayouts.map(\.id))
+        result.applicationWindowMappings.removeAll { mapping in
+            guard mapping.layout.kind == .custom else { return false }
+            guard let id = UUID(uuidString: mapping.layout.identifier) else { return true }
+            return !validCustomLayoutIDs.contains(id)
+        }
         return try result.validated()
     }
 }
@@ -157,6 +163,11 @@ nonisolated enum LayoutLibraryValidationError: Error, Equatable, LocalizedError,
     case invalidShortcut
     case duplicateShortcut
     case invalidShortcutAction
+    case tooManyApplicationMappings(Int)
+    case duplicateApplicationMappingID
+    case duplicateApplicationBundleIdentifier
+    case invalidApplicationMapping
+    case invalidMappedLayout
 
     var errorDescription: String? {
         switch self {
@@ -184,13 +195,24 @@ nonisolated enum LayoutLibraryValidationError: Error, Equatable, LocalizedError,
             String(localized: "The same global shortcut cannot be assigned to more than one action.")
         case .invalidShortcutAction:
             String(localized: "A global shortcut refers to an action that does not exist.")
+        case .tooManyApplicationMappings:
+            String(localized: "No more than 100 application mappings may be configured.")
+        case .duplicateApplicationMappingID:
+            String(localized: "Application mapping identifiers must be unique.")
+        case .duplicateApplicationBundleIdentifier:
+            String(localized: "Each application may have only one automatic layout mapping.")
+        case .invalidApplicationMapping:
+            String(localized: "An application mapping is incomplete or invalid.")
+        case .invalidMappedLayout:
+            String(localized: "An application mapping refers to a layout that does not exist.")
         }
     }
 }
 
 nonisolated struct LayoutLibrary: Codable, Equatable, Sendable {
-    static let currentSchemaVersion = 6
+    static let currentSchemaVersion = 7
     static let maximumCustomLayouts = 20
+    static let maximumApplicationMappings = 100
     static let maximumNameLength = 80
     static let defaultMenuGroupOrder = MenuGroupIdentifier.allCases.map(\.rawValue)
 
@@ -210,6 +232,7 @@ nonisolated struct LayoutLibrary: Codable, Equatable, Sendable {
     var showAllTopDragTargets: Bool
     var experimentalSpaceMovementEnabled: Bool
     var missionControlSpaceShortcutsConfirmed: Bool
+    var applicationWindowMappings: [ApplicationWindowMapping]
 
     init(
         schemaVersion: Int = Self.currentSchemaVersion,
@@ -227,7 +250,8 @@ nonisolated struct LayoutLibrary: Codable, Equatable, Sendable {
         showAllDragTargets: Bool = false,
         showAllTopDragTargets: Bool = false,
         experimentalSpaceMovementEnabled: Bool = false,
-        missionControlSpaceShortcutsConfirmed: Bool = false
+        missionControlSpaceShortcutsConfirmed: Bool = false,
+        applicationWindowMappings: [ApplicationWindowMapping] = []
     ) {
         self.schemaVersion = schemaVersion
         self.customLayouts = customLayouts
@@ -245,6 +269,7 @@ nonisolated struct LayoutLibrary: Codable, Equatable, Sendable {
         self.showAllTopDragTargets = showAllTopDragTargets
         self.experimentalSpaceMovementEnabled = experimentalSpaceMovementEnabled
         self.missionControlSpaceShortcutsConfirmed = missionControlSpaceShortcutsConfirmed
+        self.applicationWindowMappings = applicationWindowMappings
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -264,6 +289,7 @@ nonisolated struct LayoutLibrary: Codable, Equatable, Sendable {
         case showAllTopDragTargets
         case experimentalSpaceMovementEnabled
         case missionControlSpaceShortcutsConfirmed
+        case applicationWindowMappings
     }
 
     init(from decoder: Decoder) throws {
@@ -329,6 +355,10 @@ nonisolated struct LayoutLibrary: Codable, Equatable, Sendable {
             Bool.self,
             forKey: .missionControlSpaceShortcutsConfirmed
         ) ?? false
+        applicationWindowMappings = try container.decodeIfPresent(
+            [ApplicationWindowMapping].self,
+            forKey: .applicationWindowMappings
+        ) ?? []
     }
 
     var orderedMenuGroups: [MenuGroupIdentifier] {
@@ -341,6 +371,11 @@ nonisolated struct LayoutLibrary: Codable, Equatable, Sendable {
         }
         guard customLayouts.count <= Self.maximumCustomLayouts else {
             throw LayoutLibraryValidationError.tooManyLayouts(customLayouts.count)
+        }
+        guard applicationWindowMappings.count <= Self.maximumApplicationMappings else {
+            throw LayoutLibraryValidationError.tooManyApplicationMappings(
+                applicationWindowMappings.count
+            )
         }
         guard layoutPadding.isFinite,
               layoutPadding >= 0,
@@ -355,6 +390,10 @@ nonisolated struct LayoutLibrary: Codable, Equatable, Sendable {
         let layoutIDs = customLayouts.map(\.id)
         guard Set(layoutIDs).count == layoutIDs.count else {
             throw LayoutLibraryValidationError.duplicateLayoutID
+        }
+        let mappingIDs = applicationWindowMappings.map(\.id)
+        guard Set(mappingIDs).count == mappingIDs.count else {
+            throw LayoutLibraryValidationError.duplicateApplicationMappingID
         }
 
         let supportedMenuGroups = Set(Self.defaultMenuGroupOrder)
@@ -386,6 +425,38 @@ nonisolated struct LayoutLibrary: Codable, Equatable, Sendable {
                 throw LayoutLibraryValidationError.invalidGroupReference
             }
             result.customLayouts[index].name = String(name.prefix(Self.maximumNameLength))
+        }
+
+        var mappedBundleIdentifiers: Set<String> = []
+        for index in result.applicationWindowMappings.indices {
+            let applicationName = result.applicationWindowMappings[index].applicationName
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            let bundleIdentifier = result.applicationWindowMappings[index].bundleIdentifier
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            let displayIdentifier = result.applicationWindowMappings[index].displayIdentifier
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            let displayName = result.applicationWindowMappings[index].displayName
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !applicationName.isEmpty,
+                  !bundleIdentifier.isEmpty,
+                  !displayIdentifier.isEmpty,
+                  !displayName.isEmpty else {
+                throw LayoutLibraryValidationError.invalidApplicationMapping
+            }
+            guard mappedBundleIdentifiers.insert(bundleIdentifier).inserted else {
+                throw LayoutLibraryValidationError.duplicateApplicationBundleIdentifier
+            }
+            guard result.applicationWindowMappings[index].layout.action(in: result) != nil else {
+                throw LayoutLibraryValidationError.invalidMappedLayout
+            }
+            result.applicationWindowMappings[index].applicationName = String(
+                applicationName.prefix(Self.maximumNameLength)
+            )
+            result.applicationWindowMappings[index].bundleIdentifier = bundleIdentifier
+            result.applicationWindowMappings[index].displayIdentifier = displayIdentifier
+            result.applicationWindowMappings[index].displayName = String(
+                displayName.prefix(Self.maximumNameLength)
+            )
         }
 
         let validActionIDs = Set(

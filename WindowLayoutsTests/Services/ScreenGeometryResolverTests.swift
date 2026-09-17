@@ -188,4 +188,37 @@ struct ScreenGeometryResolverTests {
             among: screens
         ) == nil)
     }
+
+    @Test func mappedScreenPrefersPersistentIdentifierAndUsesUniqueNameFallback() {
+        let first = ScreenSnapshot(
+            id: "1",
+            persistentID: "uuid-one",
+            name: "LG Display",
+            frame: CGRect(x: 0, y: 0, width: 100, height: 100),
+            visibleFrame: CGRect(x: 0, y: 0, width: 100, height: 100)
+        )
+        let second = ScreenSnapshot(
+            id: "2",
+            persistentID: "uuid-two",
+            name: "Built-in Display",
+            frame: CGRect(x: 100, y: 0, width: 100, height: 100),
+            visibleFrame: CGRect(x: 100, y: 0, width: 100, height: 100)
+        )
+
+        #expect(ScreenGeometryResolver.mappedScreen(
+            persistentID: "uuid-two",
+            fallbackName: "LG Display",
+            among: [first, second]
+        ) == second)
+        #expect(ScreenGeometryResolver.mappedScreen(
+            persistentID: "missing",
+            fallbackName: "LG Display",
+            among: [first, second]
+        ) == first)
+        #expect(ScreenGeometryResolver.mappedScreen(
+            persistentID: "missing",
+            fallbackName: "Unknown",
+            among: [first, second]
+        ) == nil)
+    }
 }
