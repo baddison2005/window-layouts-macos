@@ -71,6 +71,15 @@ multi-display workflows, drag targets, and configuration options.
 | ![Keyboard shortcut configuration for layouts and display movement](screenshots/Keyboard_shortcuts_for_layouts_monitor_movement.png) | ![General settings for padding, the green-button panel, and drag targets](screenshots/General_settings_Window_Layouts.png) | ![About tab showing app information and the secure update checker](screenshots/About_tab_and_update_checker.png) |
 | Assign global shortcuts to fixed and custom layouts, monitor movement, display filling, and other window actions. | Tune edge-aware padding and enable the optional green-button panel, Dock icon, or input-transparent drag targets. | Review the installed version and author information, visit the source repository, and securely check for signed stable updates. |
 
+### Place applications automatically
+
+![Application mappings assigning newly launched apps to layouts and displays](screenshots/Map_application_windows_to_layouts.png)
+
+Map an application to a built-in or custom layout on a chosen display. Window
+Layouts acts only after a fresh application launch and can wait until a real
+document editor is ready, leaving launchers, file choosers, and template
+choosers untouched.
+
 ### Arrange windows by dragging
 
 ![Layout targets displayed immediately across multiple application windows](screenshots/Layout_targets_shown_immidiately_when_dragging_window.png)
@@ -161,7 +170,11 @@ the application was previously closed; opening additional windows in an
 already-running application does not trigger the mapping. For applications
 such as Microsoft Word or Excel that initially show a document chooser, select
 **Wait for a document window** so placement occurs after a file is opened or a
-new document is created.
+new document is created. Keynote receives additional handling for its multi-step
+launch flow: Window Layouts ignores the Open and theme choosers, waits through
+modal conversion warnings, recognises the completed slide editor, and allows
+Keynote's launch-time resizing to settle before enforcing the selected layout.
+This supports both newly created presentations and converted PowerPoint files.
 
 Settings changes remain in a draft until **Apply** is selected. **Cancel** or
 closing the Settings window discards unapplied changes.
@@ -190,7 +203,13 @@ application title bars or suppress Apple's standard green-button menu.
 
 Some applications expose limited or nonstandard Accessibility information. In
 those cases, particular windows or controls may not be available to Window
-Layouts.
+Layouts, and automatic application mapping may not work for every application
+or window type. If an application fails to map, please report it through
+[GitHub Issues](https://github.com/baddison2005/window-layouts-macos/issues) or
+contact the developer through the repository, including the application name,
+version, and whether it displayed a launcher, chooser, warning, or document
+window first. App-specific public-Accessibility workarounds such as the Keynote
+handling above can then be investigated without using private APIs.
 
 ### Terminal window sizing
 
