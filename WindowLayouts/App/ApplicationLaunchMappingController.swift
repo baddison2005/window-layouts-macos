@@ -138,6 +138,7 @@ final class ApplicationLaunchMappingController: ObservableObject {
                 try await windowService.performApplicationMapping(
                     action,
                     processIdentifier: processIdentifier,
+                    applicationBundleIdentifier: bundleIdentifier,
                     applicationName: mapping.applicationName,
                     windowRequirement: mapping.windowRequirement,
                     destinationScreenID: destination.id,

@@ -39,6 +39,67 @@ nonisolated struct WindowDragSnapshot: Equatable, Sendable {
     let frame: CGRect
 }
 
+nonisolated enum DocumentAttributeEvidence: Equatable, Sendable {
+    case unsupported
+    case empty
+    case value
+}
+
+nonisolated enum DocumentWindowSelectionPolicy {
+    // These controls were observed in the editors, but not in their launchers.
+    // Bundle IDs scope the checks so another application's similarly named
+    // control cannot accidentally qualify a chooser as a document.
+    static func editorIdentifiers(for bundleIdentifier: String?) -> Set<String>? {
+        switch bundleIdentifier {
+        case "com.microsoft.Excel": ["XLFormulaEditor"]
+        case "com.apple.Keynote", "com.apple.iWork.Keynote": ["ToolbarItemAddSlide"]
+        default: nil
+        }
+    }
+
+    static func editorRoles(for bundleIdentifier: String?) -> Set<String>? {
+        switch bundleIdentifier {
+        case "com.apple.Keynote", "com.apple.iWork.Keynote": ["AXLayoutArea"]
+        default: nil
+        }
+    }
+
+    static func editorRoleSignature(for bundleIdentifier: String?) -> Set<String>? {
+        switch bundleIdentifier {
+        // Keynote Creator Studio exposes its slide canvas through AXContents,
+        // not AXChildren, but its completed editor consistently includes both
+        // a toolbar and the inspector's radio group. Neither chooser does.
+        case "com.apple.Keynote", "com.apple.iWork.Keynote": ["AXToolbar", "AXRadioGroup"]
+        default: nil
+        }
+    }
+
+    static func editorStabilizationDuration(for bundleIdentifier: String?) -> Duration {
+        switch bundleIdentifier {
+        case "com.apple.Keynote", "com.apple.iWork.Keynote": .seconds(2)
+        default: .milliseconds(500)
+        }
+    }
+
+    static func shouldSelect(
+        documentEvidence: DocumentAttributeEvidence,
+        appearedAfterBaseline: Bool,
+        titleChangedAfterBaseline: Bool,
+        baselineComplete: Bool,
+        editorConfirmed: Bool? = nil
+    ) -> Bool {
+        // A known editor must have its controls ready, even for saved files.
+        // In particular, AXDocument/noValue is also returned by some choosers.
+        if let editorConfirmed { return editorConfirmed }
+        if documentEvidence == .value {
+            return true
+        }
+        return documentEvidence == .empty
+            && baselineComplete
+            && (appearedAfterBaseline || titleChangedAfterBaseline)
+    }
+}
+
 nonisolated enum WindowAccessibilityError: Error, Equatable, LocalizedError, Sendable {
     case permissionRequired
     case noFocusedApplication
@@ -102,6 +163,17 @@ actor WindowAccessibilityService {
     private static let displayTransitionStepDelay = Duration.milliseconds(50)
     private static let displaySettleDelay = Duration.milliseconds(220)
     private static let displayHandoffDelay = Duration.milliseconds(350)
+    private static let documentLaunchBaselineDuration = Duration.milliseconds(1_250)
+    private static let applicationMappingSettleDelays: [Duration] = [
+        .milliseconds(350),
+        .milliseconds(650),
+        .milliseconds(1_000),
+        .milliseconds(1_500),
+        .milliseconds(2_500),
+        .milliseconds(4_000),
+        .milliseconds(750),
+        .milliseconds(750)
+    ]
 
     private struct FocusedWindow {
         let element: AXUIElement
@@ -119,6 +191,16 @@ actor WindowAccessibilityService {
         let originalFrame: CGRect
         var lastAppliedFrame: CGRect?
         var lastAppliedLayout: NormalizedRect?
+    }
+
+    private struct DocumentLaunchWindow {
+        let element: AXUIElement
+        let initialTitle: String?
+    }
+
+    private struct EditorControlScanResult {
+        let matched: Bool
+        let summary: String
     }
 
     private var restoreEntries: [RestoreEntry] = []
@@ -156,6 +238,7 @@ actor WindowAccessibilityService {
     func performApplicationMapping(
         _ action: WindowAction,
         processIdentifier: pid_t,
+        applicationBundleIdentifier: String,
         applicationName: String,
         windowRequirement: ApplicationWindowRequirement,
         destinationScreenID: String,
@@ -171,21 +254,56 @@ actor WindowAccessibilityService {
             throw WindowAccessibilityError.noUsableScreen
         }
 
-        let window = try await waitForMappedWindow(
-            processIdentifier: processIdentifier,
-            applicationName: applicationName,
-            requirement: windowRequirement,
-            timeout: timeout
-        )
-        pruneStaleRestoreEntries()
-        try await perform(
-            action,
-            for: window,
-            destinationScreenID: destinationScreenID,
-            screens: screens,
-            padding: padding,
-            knownLayouts: knownLayouts
-        )
+        var staleWindowRetries = 0
+        while true {
+            let window = try await waitForMappedWindow(
+                processIdentifier: processIdentifier,
+                applicationBundleIdentifier: applicationBundleIdentifier,
+                applicationName: applicationName,
+                requirement: windowRequirement,
+                timeout: timeout
+            )
+            pruneStaleRestoreEntries()
+            do {
+                try await perform(
+                    action,
+                    for: window,
+                    destinationScreenID: destinationScreenID,
+                    screens: screens,
+                    padding: padding,
+                    knownLayouts: knownLayouts
+                )
+                try await settleApplicationMapping(
+                    action,
+                    for: window,
+                    destinationScreenID: destinationScreenID,
+                    screens: screens,
+                    padding: padding
+                )
+                return
+            } catch let error as WindowAccessibilityError
+                where windowRequirement == .documentWindow
+                    && staleWindowRetries < 3
+                    && Self.isStaleMappedWindowError(error) {
+                staleWindowRetries += 1
+                AppDiagnostics.applicationMappings.debug(
+                    "Mapped transition window disappeared; resuming document wait retry=\(staleWindowRetries, privacy: .public)"
+                )
+            }
+        }
+    }
+
+    nonisolated static func isStaleMappedWindowError(
+        _ error: WindowAccessibilityError
+    ) -> Bool {
+        switch error {
+        case .noFocusedWindow, .unsupportedWindow:
+            true
+        case .accessibilityFailure(_, let code):
+            code == AXError.invalidUIElement.rawValue
+        default:
+            false
+        }
     }
 
     func fillScreen(
@@ -595,6 +713,7 @@ actor WindowAccessibilityService {
 
     private func waitForMappedWindow(
         processIdentifier: pid_t,
+        applicationBundleIdentifier: String,
         applicationName: String,
         requirement: ApplicationWindowRequirement,
         timeout: Duration
@@ -611,17 +730,146 @@ actor WindowAccessibilityService {
             operation: "setting a mapped application messaging timeout"
         )
 
+        var documentLaunchWindows: [DocumentLaunchWindow] = []
+        var documentBaselineDeadline: ContinuousClock.Instant?
+        let editorIdentifiers = DocumentWindowSelectionPolicy.editorIdentifiers(
+            for: applicationBundleIdentifier
+        )
+        let editorRoles = DocumentWindowSelectionPolicy.editorRoles(
+            for: applicationBundleIdentifier
+        )
+        let editorRoleSignature = DocumentWindowSelectionPolicy.editorRoleSignature(
+            for: applicationBundleIdentifier
+        )
+        let editorStabilizationDuration = DocumentWindowSelectionPolicy
+            .editorStabilizationDuration(for: applicationBundleIdentifier)
+        var readyWindow: AXUIElement?
+        var readySince: ContinuousClock.Instant?
+#if DEBUG
+        var lastCandidateCount: Int?
+        var lastEditorScanSummary: String?
+#endif
+
         while clock.now < deadline {
             try Task.checkCancellation()
-            if let element = mappedWindowCandidate(
-                in: application,
-                applicationName: applicationName,
-                requirement: requirement
-            ) {
+            let candidates = mappedWindowCandidates(in: application)
+#if DEBUG
+            if lastCandidateCount != candidates.count {
+                AppDiagnostics.applicationMappings.debug(
+                    "Document mapping AX candidates bundle=\(applicationBundleIdentifier, privacy: .public) pid=\(Int(processIdentifier), privacy: .private) count=\(candidates.count, privacy: .public)"
+                )
+                lastCandidateCount = candidates.count
+            }
+#endif
+            if requirement == .firstEligibleWindow,
+               let element = candidates.first {
                 return FocusedWindow(
                     element: element,
                     processIdentifier: processIdentifier
                 )
+            }
+
+            if requirement == .documentWindow {
+                if applicationHasBlockingModalWindow(application) {
+                    readyWindow = nil
+                    readySince = nil
+                    try await Task.sleep(for: .milliseconds(250))
+                    continue
+                }
+                if documentBaselineDeadline == nil, !candidates.isEmpty {
+                    documentBaselineDeadline = clock.now.advanced(
+                        by: Self.documentLaunchBaselineDuration
+                    )
+                    AppDiagnostics.applicationMappings.debug(
+                        "Capturing startup windows before document mapping app=\(applicationName, privacy: .private(mask: .hash)) pid=\(Int(processIdentifier), privacy: .private)"
+                    )
+                }
+                let baselineComplete = documentBaselineDeadline.map { clock.now >= $0 } ?? false
+
+                var foundReadyCandidate = false
+                for window in candidates {
+                    let documentEvidence = documentAttributeEvidence(of: window)
+                    let currentTitle = try? optionalStringAttribute(
+                        kAXTitleAttribute as CFString,
+                        of: window
+                    )
+                    let baseline = documentLaunchWindows.first {
+                        CFEqual($0.element, window)
+                    }
+                    let titleChanged = baseline.map {
+                        normalizedWindowTitle($0.initialTitle)
+                            != normalizedWindowTitle(currentTitle)
+                    } ?? false
+                    let editorScan = (
+                        editorIdentifiers != nil
+                            || editorRoles != nil
+                            || editorRoleSignature != nil
+                    )
+                        ? scanForEditorControl(
+                            in: window,
+                            identifiers: editorIdentifiers ?? [],
+                            roles: editorRoles ?? [],
+                            requiredRoles: editorRoleSignature ?? []
+                        )
+                        : nil
+#if DEBUG
+                    if let editorScan,
+                       lastEditorScanSummary != editorScan.summary {
+                        AppDiagnostics.applicationMappings.debug(
+                            "Document mapping AX scan bundle=\(applicationBundleIdentifier, privacy: .public) pid=\(Int(processIdentifier), privacy: .private) \(editorScan.summary, privacy: .public)"
+                        )
+                        lastEditorScanSummary = editorScan.summary
+                    }
+#endif
+                    if DocumentWindowSelectionPolicy.shouldSelect(
+                        documentEvidence: documentEvidence,
+                        appearedAfterBaseline: baseline == nil,
+                        titleChangedAfterBaseline: titleChanged,
+                        baselineComplete: baselineComplete,
+                        editorConfirmed: editorScan?.matched
+                    ) {
+                        foundReadyCandidate = true
+                        if readyWindow.map({ CFEqual($0, window) }) != true {
+                            readyWindow = window
+                            readySince = clock.now
+                        }
+                        // Wait across polls for editor construction to finish.
+                        // Keep the task alive while a chooser becomes an editor.
+                        guard let readySince,
+                              clock.now >= readySince.advanced(
+                                by: editorStabilizationDuration
+                              ) else {
+                            break
+                        }
+                        AppDiagnostics.applicationMappings.debug(
+                            "Document mapping candidate selected documentEvidence=\(String(describing: documentEvidence), privacy: .public) appearedAfterBaseline=\(baseline == nil, privacy: .public) titleChanged=\(titleChanged, privacy: .public) baselineComplete=\(baselineComplete, privacy: .public)"
+                        )
+                        return FocusedWindow(
+                            element: window,
+                            processIdentifier: processIdentifier
+                        )
+                    }
+                }
+                if !foundReadyCandidate {
+                    readyWindow = nil
+                    readySince = nil
+                }
+
+                if !baselineComplete {
+                    for window in candidates where !documentLaunchWindows.contains(where: {
+                        CFEqual($0.element, window)
+                    }) {
+                        documentLaunchWindows.append(
+                            DocumentLaunchWindow(
+                                element: window,
+                                initialTitle: try? optionalStringAttribute(
+                                    kAXTitleAttribute as CFString,
+                                    of: window
+                                )
+                            )
+                        )
+                    }
+                }
             }
             try await Task.sleep(for: .milliseconds(250))
         }
@@ -630,11 +878,211 @@ actor WindowAccessibilityService {
         )
     }
 
-    private func mappedWindowCandidate(
-        in application: AXUIElement,
-        applicationName: String,
-        requirement: ApplicationWindowRequirement
-    ) -> AXUIElement? {
+    private func documentAttributeEvidence(
+        of window: AXUIElement
+    ) -> DocumentAttributeEvidence {
+        var value: CFTypeRef?
+        let error = AXUIElementCopyAttributeValue(
+            window,
+            kAXDocumentAttribute as CFString,
+            &value
+        )
+        switch error {
+        case .success:
+            guard let documentValue = value as? String else { return .empty }
+            return documentValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                ? .empty
+                : .value
+        case .noValue:
+            // Unsaved NSDocument windows commonly advertise AXDocument but
+            // have no URL until their first save.
+            return .empty
+        default:
+            return .unsupported
+        }
+    }
+
+    private func scanForEditorControl(
+        in window: AXUIElement,
+        identifiers: Set<String>,
+        roles: Set<String>,
+        requiredRoles: Set<String>
+    ) -> EditorControlScanResult {
+        // Inspect only UI structure/identifiers, never document text or cells.
+        // Bound both traversal size and elapsed time; an incomplete scan is
+        // retried by the mapping loop rather than qualifying the window.
+        let deadline = ContinuousClock.now.advanced(by: .milliseconds(400))
+        var queue: [(AXUIElement, Int)] = [(window, 0)]
+        var index = 0
+        var maximumDepth = 0
+        var childReadFailures = 0
+        var observedRoles: Set<String> = []
+        var interestingIdentifiers: Set<String> = []
+
+        func result(matched: Bool, marker: String? = nil) -> EditorControlScanResult {
+            let rolesSummary = observedRoles.sorted().prefix(24).joined(separator: ",")
+            let identifiersSummary = interestingIdentifiers.sorted().prefix(16).joined(separator: ",")
+            return EditorControlScanResult(
+                matched: matched,
+                summary: "matched=\(matched) marker=\(marker ?? "none") visited=\(index) queued=\(queue.count) maxDepth=\(maximumDepth) deadline=\(ContinuousClock.now >= deadline) childReadFailures=\(childReadFailures) roles=[\(rolesSummary)] identifiers=[\(identifiersSummary)]"
+            )
+        }
+
+        while index < queue.count, index < 512, ContinuousClock.now < deadline {
+            let (element, depth) = queue[index]
+            index += 1
+            maximumDepth = max(maximumDepth, depth)
+            _ = AXUIElementSetMessagingTimeout(element, Self.messagingTimeout)
+            let role = try? stringAttribute(kAXRoleAttribute as CFString, of: element)
+            if let role {
+                observedRoles.insert(role)
+                if roles.contains(role) {
+                    return result(matched: true, marker: "role:\(role)")
+                }
+                if !requiredRoles.isEmpty,
+                   requiredRoles.isSubset(of: observedRoles) {
+                    return result(
+                        matched: true,
+                        marker: "role-signature:\(requiredRoles.sorted().joined(separator: "+"))"
+                    )
+                }
+            }
+            if let identifier = try? optionalStringAttribute(
+                kAXIdentifierAttribute as CFString, of: element
+            ) {
+                let normalized = identifier.lowercased()
+                if ["toolbar", "slide", "document", "canvas", "layout"].contains(
+                    where: normalized.contains
+                ) {
+                    interestingIdentifiers.insert(identifier)
+                }
+                if identifiers.contains(identifier) {
+                    return result(matched: true, marker: "identifier:\(identifier)")
+                }
+            }
+            // AppKit applications can insert private implementation views with
+            // public-but-unexpected AX roles between the window and editor.
+            // Traverse every accessible container instead of relying on a role
+            // allow-list, while retaining strict resource bounds above.
+            guard depth < 8 else { continue }
+            var children: CFArray?
+            guard AXUIElementCopyAttributeValues(
+                element, kAXChildrenAttribute as CFString, 0, 96, &children
+            ) == .success, let children = children as? [AXUIElement] else {
+                childReadFailures += 1
+                continue
+            }
+            queue.append(contentsOf: children.prefix(max(0, 512 - queue.count)).map {
+                ($0, depth + 1)
+            })
+        }
+        return result(matched: false)
+    }
+
+    private func applicationHasBlockingModalWindow(
+        _ application: AXUIElement
+    ) -> Bool {
+        var value: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(
+            application,
+            kAXFocusedWindowAttribute as CFString,
+            &value
+        ) == .success,
+              let value,
+              CFGetTypeID(value) == AXUIElementGetTypeID() else {
+            return false
+        }
+        let focusedWindow = unsafeBitCast(value, to: AXUIElement.self)
+        _ = AXUIElementSetMessagingTimeout(focusedWindow, Self.messagingTimeout)
+        var modalValue: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(
+            focusedWindow,
+            kAXModalAttribute as CFString,
+            &modalValue
+        ) == .success else {
+            return false
+        }
+        return (modalValue as? Bool) == true
+    }
+
+    private func settleApplicationMapping(
+        _ action: WindowAction,
+        for window: FocusedWindow,
+        destinationScreenID: String,
+        screens: [ScreenSnapshot],
+        padding: CGFloat
+    ) async throws {
+        guard let target = applicationMappingTarget(
+            for: action,
+            destinationScreenID: destinationScreenID,
+            screens: screens,
+            padding: padding
+        ) else { return }
+
+        var consecutiveAcceptableFrames = 0
+        for delay in Self.applicationMappingSettleDelays {
+            try await Task.sleep(for: delay)
+            try Task.checkCancellation()
+            try validateEligibility(of: window.element)
+
+            let observedFrame = try frame(of: window.element)
+            if frameIsAcceptable(
+                observedFrame,
+                requested: target.frame,
+                in: target.usableFrame
+            ) {
+                consecutiveAcceptableFrames += 1
+                if consecutiveAcceptableFrames >= 2 { return }
+                continue
+            }
+
+            consecutiveAcceptableFrames = 0
+            let appliedFrame = try await setFrame(
+                target.frame,
+                of: window.element,
+                constrainedTo: target.usableFrame
+            )
+            recordAppliedFrame(
+                appliedFrame,
+                intendedLayout: target.layout,
+                for: window
+            )
+            AppDiagnostics.applicationMappings.debug(
+                "Corrected a mapped window after launch-time frame drift observed=\(String(describing: observedFrame), privacy: .private) requested=\(String(describing: target.frame), privacy: .private)"
+            )
+        }
+    }
+
+    private func applicationMappingTarget(
+        for action: WindowAction,
+        destinationScreenID: String,
+        screens: [ScreenSnapshot],
+        padding: CGFloat
+    ) -> (frame: CGRect, usableFrame: CGRect, layout: NormalizedRect)? {
+        guard let screen = screens.first(where: { $0.id == destinationScreenID }) else {
+            return nil
+        }
+        let layout: NormalizedRect
+        switch action {
+        case .fixed(let fixedLayout):
+            layout = fixedLayout.normalizedRect
+        case .custom(let customLayout):
+            layout = customLayout.normalizedRect
+        default:
+            return nil
+        }
+        return (
+            LayoutEngine.rectangle(
+                for: layout,
+                in: screen.visibleFrame,
+                padding: padding
+            ),
+            screen.visibleFrame,
+            layout
+        )
+    }
+
+    private func mappedWindowCandidates(in application: AXUIElement) -> [AXUIElement] {
         var value: CFTypeRef?
         let error = AXUIElementCopyAttributeValue(
             application,
@@ -643,9 +1091,10 @@ actor WindowAccessibilityService {
         )
         guard error == .success,
               let windows = value as? [AXUIElement] else {
-            return nil
+            return []
         }
 
+        var candidates: [AXUIElement] = []
         for window in windows {
             do {
                 try check(
@@ -653,44 +1102,18 @@ actor WindowAccessibilityService {
                     operation: "setting a mapped window messaging timeout"
                 )
                 try validateEligibility(of: window)
-                if requirement == .documentWindow,
-                   !isDocumentWindow(window, applicationName: applicationName) {
-                    continue
-                }
-                return window
+                candidates.append(window)
             } catch {
                 continue
             }
         }
-        return nil
+        return candidates
     }
 
-    private func isDocumentWindow(
-        _ window: AXUIElement,
-        applicationName: String
-    ) -> Bool {
-        var names: CFArray?
-        guard AXUIElementCopyAttributeNames(window, &names) == .success,
-              let attributes = names as? [String],
-              attributes.contains(kAXDocumentAttribute as String) else {
-            return false
-        }
-
-        if let document = try? optionalStringAttribute(
-            kAXDocumentAttribute as CFString,
-            of: window
-        ), !document.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            return true
-        }
-        guard let title = try? optionalStringAttribute(
-            kAXTitleAttribute as CFString,
-            of: window
-        ) else {
-            return false
-        }
-        let normalizedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
-        return !normalizedTitle.isEmpty
-            && normalizedTitle.caseInsensitiveCompare(applicationName) != .orderedSame
+    private func normalizedWindowTitle(_ title: String?) -> String? {
+        guard let title else { return nil }
+        let normalized = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        return normalized.isEmpty ? nil : normalized
     }
 
     private func visibleEligibleWindows(

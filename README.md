@@ -81,6 +81,8 @@ to custom items absent from the imported archive are removed.
 
 ## Automatic application layouts
 
+![Application mappings assigning newly launched apps to layouts and displays](screenshots/Map_application_windows_to_layouts.png)
+
 Open **Configure Window Layouts Experimental… → Applications** to map an
 application to a built-in or custom layout on a specific display. The mapping
 runs only after a fresh application launch, not when another instance is
@@ -90,7 +92,20 @@ rearranging windows that macOS restores when Window Layouts launches at login.
 For applications such as Microsoft Word and Excel that begin with a file or
 template chooser, select **Wait for a document window**. Window Layouts then
 waits until a file is opened or a new document is created before applying the
-layout.
+layout. Keynote receives additional handling for its multi-step launch flow:
+the app ignores the Open and theme choosers, waits through modal conversion
+warnings, recognises the completed slide editor, and allows Keynote's own
+launch-time resizing to settle before enforcing the selected layout. This
+supports both newly created presentations and converted PowerPoint files.
+
+Some applications expose limited or nonstandard Accessibility information, so
+automatic mapping may not work for every application or window type. Please
+report failures through
+[GitHub Issues](https://github.com/baddison2005/window-layouts-macos/issues) or
+contact the developer through the repository, including the application name,
+version, and whether a launcher, chooser, warning, or document window appeared
+first. App-specific public-Accessibility workarounds can then be investigated
+without using private APIs.
 
 The About tab checks only official experimental-channel releases. Downloads
 are validated independently from the stable app and retain this edition's
