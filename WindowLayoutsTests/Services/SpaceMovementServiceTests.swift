@@ -9,6 +9,59 @@ import Testing
 
 @MainActor
 struct SpaceMovementServiceTests {
+    @Test func acrobatCandidatesAvoidTheLeftControlsAndRespectNegativeDisplayOrigins() {
+        let frame = CGRect(x: -1191, y: -2160, width: 180, height: 300)
+        let points = SpaceMovementTitleBarPolicy.acrobatCandidates(
+            bundleIdentifier: "com.adobe.Acrobat.Pro", frame: frame
+        )!
+        #expect(points.first == CGPoint(x: frame.minX + 5, y: frame.minY + 28))
+        #expect(points[1] == CGPoint(x: frame.maxX - 5, y: frame.minY + 28))
+        #expect(points.allSatisfy {
+            frame.contains($0) && min($0.x - frame.minX, frame.maxX - $0.x) <= 11
+                && $0.y == frame.minY + 28
+        })
+    }
+
+    @Test func acrobatMarginTracksCloseButtonHeight() {
+        let frame = CGRect(x: 100, y: 200, width: 1000, height: 700)
+        let close = CGRect(x: 112, y: 211, width: 14, height: 14)
+        let points = SpaceMovementTitleBarPolicy.acrobatCandidates(
+            bundleIdentifier: "com.adobe.Acrobat.Pro", frame: frame, closeButtonFrame: close
+        )!
+        #expect(points.first == CGPoint(x: 105, y: 228))
+        #expect(points.allSatisfy { !close.insetBy(dx: -3, dy: -5).contains($0) })
+    }
+
+    @Test func acrobatFallbackIsRestrictedToVerifiedLeftMargin() {
+        let frame = CGRect(x: 590, y: 494, width: 1035, height: 993)
+        let close = CGRect(x: 600, y: 504, width: 16, height: 16)
+        #expect(SpaceMovementTitleBarPolicy.isVerifiedLeftMargin(
+            CGPoint(x: 595, y: 523), frame: frame, close: close
+        ))
+        for point in [CGPoint(x: 597, y: 523), CGPoint(x: 595, y: 512),
+                      CGPoint(x: 1618, y: 523), CGPoint(x: 590, y: 523)] {
+            #expect(!SpaceMovementTitleBarPolicy.isVerifiedLeftMargin(point, frame: frame, close: close))
+        }
+        #expect(!SpaceMovementTitleBarPolicy.isVerifiedLeftMargin(
+            CGPoint(x: 595, y: 523), frame: frame, close: nil
+        ))
+    }
+
+    @Test func acrobatPolicyDoesNotChangeBrowserOrUnknownAppCandidates() {
+        let frame = CGRect(x: 0, y: 0, width: 900, height: 700)
+        for identifier in [nil, "com.google.Chrome", "org.mozilla.firefox", "com.adobe.other"] {
+            #expect(SpaceMovementTitleBarPolicy.acrobatCandidates(
+                bundleIdentifier: identifier, frame: frame
+            ) == nil)
+        }
+        #expect(SpaceMovementTitleBarPolicy.acrobatCandidates(
+            bundleIdentifier: "com.adobe.Reader", frame: frame
+        )?.isEmpty == false)
+        #expect(SpaceMovementTitleBarPolicy.acrobatCandidates(
+            bundleIdentifier: "com.adobe.Acrobat.Pro", frame: .zero
+        ) == [])
+    }
+
     @Test func postsCompleteGestureAndRestoresPointer() async throws {
         let fixture = Fixture()
         let service = SpaceMovementService(client: fixture.client())

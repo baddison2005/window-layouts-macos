@@ -67,8 +67,24 @@ the app can report only that the gesture was requested. Behavior can vary by app
 and may stop working after a macOS update. Some applications expose incomplete
 or misleading title-bar Accessibility information. Space movement may therefore
 fail, activate an unexpected title-bar control, or produce other unexpected
-behavior. Adobe Acrobat is a known example where a safe draggable point may not
-be available. Native full-screen windows are not supported.
+behavior. Native full-screen windows are not supported.
+
+### Adobe Acrobat Space movement
+
+Version 1.4.2 fixes Space movement for tested Adobe Acrobat windows. Acrobat's
+custom title bar does not implement Accessibility hit testing, so Window Layouts
+uses a narrow point near the left edge, just below and clear of the close button.
+When hit testing is unavailable, a guarded fallback checks the public macOS
+window list to confirm that Acrobat is frontmost and the target point is not
+covered by another window. It excludes the Dock's full-display bookkeeping
+window from that obstruction check.
+
+The gesture holds the left mouse button while sending Control–Left Arrow or
+Control–Right Arrow, then releases input and restores the pointer. Acrobat
+versions or window types with different title bars may still need additional
+handling. Please report failures through
+[GitHub Issues](https://github.com/baddison2005/window-layouts-macos/issues),
+including your macOS and Acrobat versions and the diagnostic messages.
 
 ## Portable custom layouts
 

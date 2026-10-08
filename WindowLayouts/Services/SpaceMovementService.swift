@@ -358,6 +358,44 @@ final class SpaceMovementService {
 
 }
 
+// Acrobat draws Home/tabs itself and may expose them only as AXWindow.
+// Prefer the outer title-bar margins just below the traffic-light buttons,
+// matching manually verified hold points, rather than the tab strip's centre.
+// These are candidates, not proof of draggability: every point still requires
+// the resolver's control exclusion and AX ownership/interaction checks.
+nonisolated enum SpaceMovementTitleBarPolicy {
+    static func acrobatCandidates(
+        bundleIdentifier: String?, frame: CGRect, closeButtonFrame: CGRect? = nil
+    ) -> [CGPoint]? {
+        guard let identifier = bundleIdentifier?.lowercased(),
+              ["com.adobe.acrobat.pro", "com.adobe.reader"].contains(identifier) else {
+            return nil
+        }
+        guard frame.width.isFinite, frame.height.isFinite,
+              frame.minX.isFinite, frame.minY.isFinite,
+              frame.width >= 180, frame.height >= 32 else { return [] }
+        let y = closeButtonFrame.map { $0.maxY + 3 } ?? (frame.minY + 28)
+        guard y.isFinite, y >= frame.minY + 16, y <= frame.minY + 40 else { return [] }
+        return [5.0, 7.0, 9.0, 11.0].flatMap { inset in
+            [CGPoint(x: frame.minX + inset, y: y),
+             CGPoint(x: frame.maxX - inset, y: y)]
+        }.filter { point in
+            frame.contains(point)
+                && !(closeButtonFrame?.insetBy(dx: -3, dy: -5).contains(point) ?? false)
+        }
+    }
+
+    static func isVerifiedLeftMargin(_ point: CGPoint, frame: CGRect, close: CGRect?) -> Bool {
+        guard let close, frame.contains(close),
+              close.width > 0, close.height > 0 else { return false }
+        return frame.contains(point)
+            && point.x >= frame.minX + 4 && point.x <= frame.minX + 7
+            && point.x < close.minX - 3
+            && abs(point.y - (close.maxY + 3)) < 0.5
+            && point.y <= frame.minY + 40
+    }
+}
+
 private enum SpaceMovementAXTargetResolver {
     private static let messagingTimeout: Float = 0.25
     private static let minimumWindowWidth: CGFloat = 180
@@ -487,27 +525,54 @@ private enum SpaceMovementAXTargetResolver {
         let generalCandidatePoints = candidateYs.flatMap { y in
             generalCandidateXs.map { CGPoint(x: $0, y: y) }
         }
-        let candidatePoints = controlAdjacentPoints
+        let acrobatCandidates = SpaceMovementTitleBarPolicy.acrobatCandidates(
+            bundleIdentifier: bundleIdentifier, frame: windowFrame,
+            closeButtonFrame: closeButtonFrame
+        )
+        let candidatePoints = acrobatCandidates ?? (controlAdjacentPoints
             + closeButtonCornerPoints
             + closeButtonFallbackPoints
-            + (usesDenseBrowserTabStrip ? [] : generalCandidatePoints)
+            + (usesDenseBrowserTabStrip ? [] : generalCandidatePoints))
+        let strategy = acrobatCandidates == nil ? "control-adjacent" : "acrobat-outer-margins"
 
         stage = "safeTitleBarPoint"
-        for point in candidatePoints {
+        if acrobatCandidates != nil {
+            AppDiagnostics.windowOperations.debug(
+                "Experimental Space Acrobat geometry window=\(String(describing: windowFrame), privacy: .public) close=\(String(describing: closeButtonFrame), privacy: .public) controls=\(String(describing: controlFrames), privacy: .public)"
+            )
+        }
+        for (candidateIndex, point) in candidatePoints.enumerated() {
             let isExactCloseButtonCorner = closeButtonCornerPoint == point
             let isClearOfControls = isExactCloseButtonCorner
                 ? !controlFrames.contains(where: { $0.contains(point) })
                 : isClearOfTitleBarControls(point, controlFrames: controlFrames)
-            guard windowFrame.insetBy(dx: 8, dy: 0).contains(point),
-                isClearOfControls,
-                try pointIsSafe(
-                    point,
-                    in: window,
-                    systemWide: systemWide
+            // Acrobat's verified margin is 7 points inside the edge; the
+            // general 8-point inset would discard it before AX hit testing.
+            let rejection: String?
+            if !windowFrame.insetBy(dx: acrobatCandidates == nil ? 8 : 4, dy: 0).contains(point) {
+                rejection = "outside-window-inset"
+            } else if !isClearOfControls {
+                rejection = "traffic-light-clearance"
+            } else {
+                rejection = try pointRejectionReason(
+                    point, in: window, systemWide: systemWide,
+                    verifiedAcrobatMargin: acrobatCandidates != nil
+                        && SpaceMovementTitleBarPolicy.isVerifiedLeftMargin(
+                            point, frame: windowFrame, close: closeButtonFrame
+                        ),
+                    windowFrame: windowFrame
                 )
-            else { continue }
+            }
+            if let rejection {
+                if acrobatCandidates != nil {
+                    AppDiagnostics.windowOperations.debug(
+                        "Experimental Space Acrobat candidate=\(candidateIndex, privacy: .public) offset=(\(point.x - windowFrame.minX, privacy: .public), \(point.y - windowFrame.minY, privacy: .public)) rejected=\(rejection, privacy: .public)"
+                    )
+                }
+                continue
+            }
             AppDiagnostics.windowOperations.debug(
-                "Experimental Space target resolved pid=\(processIdentifier, privacy: .public) point=(\(point.x, privacy: .public), \(point.y, privacy: .public))"
+                "Experimental Space target resolved pid=\(processIdentifier, privacy: .public) strategy=\(strategy, privacy: .public) candidate=\(candidateIndex, privacy: .public) offset=(\(point.x - windowFrame.minX, privacy: .public), \(point.y - windowFrame.minY, privacy: .public)) point=(\(point.x, privacy: .public), \(point.y, privacy: .public))"
             )
             return SpaceMovementTarget(
                 processIdentifier: processIdentifier,
@@ -515,6 +580,9 @@ private enum SpaceMovementAXTargetResolver {
                 dragPoint: point
             )
         }
+        AppDiagnostics.windowOperations.debug(
+            "Experimental Space target rejected strategy=\(strategy, privacy: .public) candidates=\(candidatePoints.count, privacy: .public)"
+        )
         throw SpaceMovementError.noSafeTitleBarPoint
     }
 
@@ -655,11 +723,13 @@ private enum SpaceMovementAXTargetResolver {
         return try? frame(of: button)
     }
 
-    private static func pointIsSafe(
+    private static func pointRejectionReason(
         _ point: CGPoint,
         in window: AXUIElement,
-        systemWide: AXUIElement
-    ) throws -> Bool {
+        systemWide: AXUIElement,
+        verifiedAcrobatMargin: Bool,
+        windowFrame: CGRect
+    ) throws -> String? {
         var hitElement: AXUIElement?
         let error = AXUIElementCopyElementAtPosition(
             systemWide,
@@ -667,32 +737,100 @@ private enum SpaceMovementAXTargetResolver {
             Float(point.y),
             &hitElement
         )
-        if error == .noValue || error == .attributeUnsupported {
-            return false
-        }
         if error == .apiDisabled {
             throw SpaceMovementError.accessibilityPermissionRequired
         }
-        guard error == .success else {
-            return false
+        if error == .notImplemented, verifiedAcrobatMargin {
+            var pid: pid_t = 0
+            guard AXUIElementGetPid(window, &pid) == .success else {
+                return "acrobat-fallback-missing-pid"
+            }
+            guard NSWorkspace.shared.frontmostApplication?.processIdentifier == pid else {
+                return "acrobat-fallback-app-not-frontmost"
+            }
+            let screens = NSScreen.screens
+            let primaryTop = screens.first?.frame.maxY ?? 0
+            let displayBounds = screens.map {
+                CGRect(x: $0.frame.minX, y: primaryTop - $0.frame.maxY,
+                       width: $0.frame.width, height: $0.frame.height)
+            }
+            // No screen capture or private window-server API: query public
+            // window geometry in front-to-back order. Refuse an obscured point
+            // or an ambiguous window; never fall back on app ownership alone.
+            guard let windows = CGWindowListCopyWindowInfo(
+                [.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID
+            ) as? [[String: Any]] else { return "acrobat-fallback-window-list-unavailable" }
+            for info in windows {
+                guard let alpha = info[kCGWindowAlpha as String] as? NSNumber,
+                      alpha.doubleValue > 0 else { continue }
+                guard let bounds = info[kCGWindowBounds as String] as? NSDictionary,
+                      let rect = CGRect(dictionaryRepresentation: bounds) else {
+                    return "acrobat-fallback-unknown-bounds"
+                }
+                guard rect.contains(point) else { continue }
+                // Dock can publish a full-display bookkeeping window at its
+                // own level even while ordinary apps receive pointer input.
+                // Exclude only that shape/owner/level combination, never the
+                // actual Dock, menus, or another app's floating panels.
+                if let owner = info[kCGWindowOwnerPID as String] as? NSNumber,
+                   let layer = info[kCGWindowLayer as String] as? NSNumber,
+                   layer.int32Value == CGWindowLevelForKey(.dockWindow),
+                   NSRunningApplication(processIdentifier: owner.int32Value)?.bundleIdentifier == "com.apple.dock",
+                   displayBounds.contains(where: {
+                       abs($0.minX - rect.minX) < 2 && abs($0.minY - rect.minY) < 2
+                           && abs($0.width - rect.width) < 2 && abs($0.height - rect.height) < 2
+                   }) {
+                    continue
+                }
+                guard let owner = info[kCGWindowOwnerPID as String] as? NSNumber,
+                      owner.int32Value == pid,
+                      abs(rect.minX - windowFrame.minX) < 2,
+                      abs(rect.minY - windowFrame.minY) < 2,
+                      abs(rect.width - windowFrame.width) < 2,
+                      abs(rect.height - windowFrame.height) < 2 else {
+                    let owner = info[kCGWindowOwnerPID as String] as? NSNumber
+                    let layer = info[kCGWindowLayer as String] as? NSNumber
+                    return "acrobat-fallback-point-obscured-or-window-mismatch:pid=\(owner?.int32Value ?? -1),layer=\(layer?.int32Value ?? -1),bounds=\(rect)"
+                }
+                AppDiagnostics.windowOperations.debug(
+                    "Experimental Space Acrobat verified left margin using public window geometry (AX hit test not implemented)"
+                )
+                return nil
+            }
+            return "acrobat-fallback-window-not-visible"
         }
-        guard let hitElement else { return false }
+        guard error == .success else {
+            return "hit-test-error:\(error.rawValue)"
+        }
+        guard let hitElement else { return "hit-test-empty" }
+
+        var hitPID: pid_t = 0
+        var windowPID: pid_t = 0
+        let hitPIDError = AXUIElementGetPid(hitElement, &hitPID)
+        let windowPIDError = AXUIElementGetPid(window, &windowPID)
+        if hitPIDError == .success, windowPIDError == .success, hitPID != windowPID {
+            return "different-application:hitPID=\(hitPID),targetPID=\(windowPID)"
+        }
 
         var current = hitElement
-        for _ in 0..<12 {
+        for depth in 0..<12 {
+            _ = AXUIElementSetMessagingTimeout(current, messagingTimeout)
             if CFEqual(current, window) {
-                return true
+                return nil
             }
 
-            guard
-                let role = try bestEffortStringAttribute(
+            guard let role = try bestEffortStringAttribute(
                     kAXRoleAttribute as CFString,
                     of: current
-                ), !interactiveRoles.contains(role),
-                let actions = try bestEffortActionNames(of: current),
-                !actions.contains(kAXPressAction as String)
-            else {
-                return false
+                ) else { return "missing-role:depth=\(depth)" }
+            if interactiveRoles.contains(role) {
+                return "interactive-role:\(role),depth=\(depth)"
+            }
+            guard let actions = try bestEffortActionNames(of: current) else {
+                return "unavailable-actions:role=\(role),depth=\(depth)"
+            }
+            if actions.contains(kAXPressAction as String) {
+                return "press-action:role=\(role),depth=\(depth)"
             }
 
             guard
@@ -701,11 +839,11 @@ private enum SpaceMovementAXTargetResolver {
                     of: current
                 ), !CFEqual(parent, current)
             else {
-                return false
+                return "missing-or-self-parent:role=\(role),depth=\(depth)"
             }
             current = parent
         }
-        return false
+        return "ancestor-depth-limit"
     }
 
     private static func bestEffortElementAttribute(
