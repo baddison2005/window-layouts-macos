@@ -86,6 +86,37 @@ handling. Please report failures through
 [GitHub Issues](https://github.com/baddison2005/window-layouts-macos/issues),
 including your macOS and Acrobat versions and the diagnostic messages.
 
+### Input event access remains Required
+
+If Space movement stops working and **General → Experimental Space movement →
+Input event posting** remains **Required**, first click **Request Input Event
+Access…**, approve any macOS prompt, then quit and reopen the app and choose
+**Check Again**. Accessibility, Input Monitoring, and input-event posting are
+separate permissions; enabling one does not necessarily enable the others.
+
+If requesting access produces no prompt, the permission entry may be stale,
+particularly after switching between an Xcode build and the installed release.
+To reset only the experimental app's input-event-posting permission:
+
+1. Quit all running copies of **Window Layouts Experimental**, including any
+   instance running from Xcode.
+2. Open Terminal and run:
+
+   ```bash
+   tccutil reset PostEvent com.astrobrett.WindowLayouts.Experimental
+   ```
+
+3. Launch **Window Layouts Experimental.app** from **Applications**.
+4. Open **Configure Window Layouts Experimental… → General**, click
+   **Request Input Event Access…**, and approve the macOS permission request.
+5. Quit and reopen the app if necessary, then click **Check Again** and confirm
+   that **Input event posting** shows **Enabled** before testing Space movement.
+
+The command clears the permission decision so macOS can request approval again;
+it does not grant access. It leaves the stable app's permissions, Accessibility
+and Input Monitoring permissions, custom layouts, and settings untouched. Do
+not omit the bundle identifier or use `tccutil reset All` for this procedure.
+
 ## Portable custom layouts
 
 Settings → Layouts includes **Export…** and **Import…** controls for moving
