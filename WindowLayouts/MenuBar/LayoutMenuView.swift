@@ -71,6 +71,10 @@ struct LayoutMenuView: View {
             controller.disableOptionalOverlays()
         }
 
+        Button("Disable Dock Guard") {
+            controller.dockGuardController.disableImmediately()
+        }
+
         SettingsLink {
             Text("Configure Window Layouts Experimental…")
         }

@@ -15,10 +15,12 @@ final class WindowLayoutsController: ObservableObject {
 
     private let permissionService: AccessibilityPermissionService
     let windowService: WindowAccessibilityService
+    let dockGuardController: DockGuardController
     private let spaceMovementService: SpaceMovementService
     private let settingsStore: SettingsStore
 
     init(settingsStore: SettingsStore) {
+        self.dockGuardController = DockGuardController(settingsStore: settingsStore)
         let permissionService = AccessibilityPermissionService()
         self.permissionService = permissionService
         self.windowService = WindowAccessibilityService()
@@ -38,6 +40,7 @@ final class WindowLayoutsController: ObservableObject {
     ) {
         self.permissionService = permissionService
         self.windowService = windowService
+        self.dockGuardController = DockGuardController(settingsStore: settingsStore)
         self.spaceMovementService = spaceMovementService ?? SpaceMovementService()
         self.settingsStore = settingsStore
         self.hasAccessibilityAccess = permissionService.isTrusted()

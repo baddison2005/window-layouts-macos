@@ -32,6 +32,21 @@ final class SettingsStore: ObservableObject {
         loadWarning = result.warning
     }
 
+    /// Publish shutdown even if saving fails; callers stop the runtime first.
+    @discardableResult
+    func disableDockGuard() -> Bool {
+        var disabled = library
+        disabled.dockGuard.enabled = false
+        library = disabled
+        do {
+            try persistence.save(disabled)
+            return true
+        } catch {
+            AppDiagnostics.persistence.error("Dock guard disable could not be saved.")
+            return false
+        }
+    }
+
     /// Emergency, best-effort runtime shutdown. Publish the disabled state even
     /// if persistence fails so an optional panel can never trap input.
     @discardableResult

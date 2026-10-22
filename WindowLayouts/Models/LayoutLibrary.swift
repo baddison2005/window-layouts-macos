@@ -233,6 +233,7 @@ nonisolated struct LayoutLibrary: Codable, Equatable, Sendable {
     var experimentalSpaceMovementEnabled: Bool
     var missionControlSpaceShortcutsConfirmed: Bool
     var applicationWindowMappings: [ApplicationWindowMapping]
+    var dockGuard: DockGuardPreferences
 
     init(
         schemaVersion: Int = Self.currentSchemaVersion,
@@ -251,7 +252,8 @@ nonisolated struct LayoutLibrary: Codable, Equatable, Sendable {
         showAllTopDragTargets: Bool = false,
         experimentalSpaceMovementEnabled: Bool = false,
         missionControlSpaceShortcutsConfirmed: Bool = false,
-        applicationWindowMappings: [ApplicationWindowMapping] = []
+        applicationWindowMappings: [ApplicationWindowMapping] = [],
+        dockGuard: DockGuardPreferences = DockGuardPreferences()
     ) {
         self.schemaVersion = schemaVersion
         self.customLayouts = customLayouts
@@ -270,6 +272,7 @@ nonisolated struct LayoutLibrary: Codable, Equatable, Sendable {
         self.experimentalSpaceMovementEnabled = experimentalSpaceMovementEnabled
         self.missionControlSpaceShortcutsConfirmed = missionControlSpaceShortcutsConfirmed
         self.applicationWindowMappings = applicationWindowMappings
+        self.dockGuard = dockGuard
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -290,6 +293,7 @@ nonisolated struct LayoutLibrary: Codable, Equatable, Sendable {
         case experimentalSpaceMovementEnabled
         case missionControlSpaceShortcutsConfirmed
         case applicationWindowMappings
+        case dockGuard
     }
 
     init(from decoder: Decoder) throws {
@@ -359,6 +363,9 @@ nonisolated struct LayoutLibrary: Codable, Equatable, Sendable {
             [ApplicationWindowMapping].self,
             forKey: .applicationWindowMappings
         ) ?? []
+        dockGuard = try container.decodeIfPresent(
+            DockGuardPreferences.self, forKey: .dockGuard
+        ) ?? DockGuardPreferences()
     }
 
     var orderedMenuGroups: [MenuGroupIdentifier] {

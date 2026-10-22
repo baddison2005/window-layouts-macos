@@ -6,7 +6,7 @@ KWin/QML code.
 - `Geometry/` is nonisolated, platform-neutral logic for normalized rectangles,
   fixed layouts, edge-aware padding, coordinate conversion, and monitor
   transfer.
-- `LayoutLibrary` schema 6 is the versioned Codable document for custom layouts,
+- `LayoutLibrary` schema 7 is the versioned Codable document for custom layouts,
   custom groups, menu group order, padding, stable shortcut assignments, and the
   launch-at-login, green-button-panel, and drag-target preferences. Older documents migrate
   in memory with safe defaults. Decoding and pre-save validation reject invalid
@@ -58,6 +58,19 @@ KWin/QML code.
   Moving or resizing the window manually invalidates that remembered match.
 - `WindowLayoutsController` coordinates menu actions without performing AX
   calls on the main actor.
+- `DockGuardController` owns the opt-in experimental Dock guard and observes
+  applied `DockGuardPreferences`. `DockGuardPolicy` is pure Quartz-coordinate
+  geometry: both modes exempt bottom-edge sections adjoining another display,
+  including stationary samples, so crossing speed and direction do not matter.
+  Strong mode adjusts only incoming mouse-movement events through a public HID
+  event tap; Gentle mode uses idle detection. Button, key, scroll, and drag
+  events are never swallowed or rewritten. Held buttons, the chosen modifier,
+  and a release cooldown bypass protection. Cached geometry refreshes on display
+  notifications and is compared every two seconds while active, ignoring Dock-
+  driven visible-frame changes. Timer work and event taps stop immediately on
+  emergency disable; the disabled preference is published even if saving fails.
+  Both the menu bar and Dock menu expose that same shutdown path. The guard
+  creates no overlay windows and is suspended inside a unit-test host.
 - `GlobalShortcutManager` observes only applied canonical settings and maps
   stable action identifiers to individual-window or multi-window-fill
   controller actions. Built-in fill IDs are fixed; custom-fill IDs contain the
@@ -164,12 +177,13 @@ KWin/QML code.
   no window title, document path, typed key, shortcut contents, or telemetry is
   recorded.
 
-No private API, title-bar modification, input synthesis, or Spaces integration
-exists. Pointer proximity is sampled only during an observed drag while drag
-targets are enabled. macOS may require the user to grant Input Monitoring for
-global drag events; Settings explains that optional privacy-controlled step.
-macOS exposes no public API for assigning arbitrary third-party windows to
-Spaces.
+The experimental edition uses public Quartz input synthesis only for opt-in
+Space-movement gestures and public pointer adjustment for the opt-in Dock guard.
+Neither feature uses private Spaces APIs or modifies another app's title bar.
+Drag targets separately observe input and never synthesize or modify it. macOS
+may require Input Monitoring for global input observation; Settings explains
+that privacy-controlled step. macOS exposes no public API for assigning
+arbitrary third-party windows to Spaces.
 
 The public SDK has no supported full-screen state attribute for third-party AX
 windows. Full-display frames are therefore rejected conservatively unless they

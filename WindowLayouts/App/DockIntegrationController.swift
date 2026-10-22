@@ -27,6 +27,7 @@ final class DockIntegrationController: ObservableObject {
         case moveToSpace(SpaceMovementDirection)
         case configure
         case disableOptionalOverlays
+        case disableDockGuard
     }
 
     private let settingsStore: SettingsStore
@@ -117,6 +118,11 @@ final class DockIntegrationController: ObservableObject {
         menu.addItem(commandItem(
             title: String(localized: "Disable Optional Overlays"),
             command: .disableOptionalOverlays,
+            enabled: true
+        ))
+        menu.addItem(commandItem(
+            title: String(localized: "Disable Dock Guard"),
+            command: .disableDockGuard,
             enabled: true
         ))
         return menu
@@ -399,6 +405,8 @@ final class DockIntegrationController: ObservableObject {
             openSettingsAction?()
         case .disableOptionalOverlays:
             windowController.disableOptionalOverlays()
+        case .disableDockGuard:
+            windowController.dockGuardController.disableImmediately()
         }
     }
 }

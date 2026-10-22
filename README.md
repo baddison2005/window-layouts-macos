@@ -9,9 +9,9 @@
 
 Window Layouts Experimental is a native macOS utility for arranging application
 windows. It includes the stable layout, display-transfer, fill-display,
-green-button panel, drag-target, Dock-menu, and global-shortcut features, plus a
-guarded experiment that asks macOS to carry the active window to the previous or
-next Space.
+green-button panel, drag-target, Dock-menu, and global-shortcut features, plus
+opt-in Space movement and a Dock guard that helps prevent accidental migration
+to another display while preserving crossings between connected displays.
 
 The app uses SwiftUI, AppKit, the public Accessibility API, and public Quartz
 event APIs. It has no third-party dependencies, telemetry, or analytics. It does
@@ -116,6 +116,50 @@ The command clears the permission decision so macOS can request approval again;
 it does not grant access. It leaves the stable app's permissions, Accessibility
 and Input Monitoring permissions, custom layouts, and settings untouched. Do
 not omit the bundle identifier or use `tccutil reset All` for this procedure.
+
+## Experimental Dock guard
+
+New in **v1.5.0**: keep the Dock on your preferred display by preventing
+accidental activation at another display's exposed bottom edge.
+
+In **General → Experimental Dock guard**, enable **Prevent accidental Dock
+movement**, choose your preferred display, and click **Apply**. The default
+display choice follows the built-in MacBook display. Position the Dock at the
+bottom of that display before enabling the guard. This prototype is disabled
+by default and requires Accessibility, input-event posting, and permission to
+observe mouse events.
+
+Choose **Protection strength**:
+
+- **Gentle (idle pointer only)** nudges an idle pointer 6 logical points inward
+  after 150 milliseconds at an exposed edge. Slow movement along the edge can
+  still trigger Dock migration.
+- **Strong (guard incoming movement)** adjusts mouse-movement events before
+  the Dock receives them, keeping the pointer clear of another display's bottom
+  activation edge. Bottom sections adjoining another display are completely
+  exempt in both modes, preserving slow crossings in either direction between
+  the LG and MacBook displays. Only exposed sections are guarded. Display
+  geometry refreshes on system notifications and is checked every two seconds
+  while active. Strong mode requires an active event tap; if macOS refuses the
+  tap, the guard reports that it is unavailable.
+
+Existing settings retain Gentle mode until you select Strong and click Apply.
+Button and keyboard events are never swallowed or modified; held buttons and
+the half-second after a release suspend protection, allowing dragging and
+resizing. These exceptions intentionally allow some Dock migration.
+
+Hold **Option** (or the bypass modifier chosen in Settings) to reach the exact
+bottom resize border, deliberately summon the Dock on another screen, or bypass
+the guard temporarily. Use **Disable Dock Guard** in the menu bar or the app's
+Dock right-click menu to stop it immediately. The disable action also saves the
+disabled preference and disarms an open Settings draft.
+
+The guard suspends when the preferred display is disconnected, during sleep,
+when permissions are unavailable, or when the Dock is positioned at the side.
+Choose **Check Dock Guard** after correcting a permission or Dock-position
+issue. This is best-effort prevention, not a direct macOS Dock lock: it does
+not automatically move the Dock back after wake or reconnection, and behaviour
+must be tested with your display arrangement. It creates no overlay windows.
 
 ## Portable custom layouts
 

@@ -66,7 +66,8 @@ struct SettingsView: View {
                 GeneralSettingsView(
                     library: $draft.library,
                     controller: controller,
-                    launchAtLoginManager: launchAtLoginManager
+                    launchAtLoginManager: launchAtLoginManager,
+                    dockGuardController: controller.dockGuardController
                 )
                 .tabItem {
                     Label("General", systemImage: "gearshape")
@@ -110,6 +111,10 @@ struct SettingsView: View {
         }
         .onDisappear {
             draft.cancel()
+        }
+        .onChange(of: settingsStore.library.dockGuard.enabled) { _, enabled in
+            // An emergency menu action must also disarm an open Settings draft.
+            if !enabled { draft.library.dockGuard.enabled = false }
         }
     }
 

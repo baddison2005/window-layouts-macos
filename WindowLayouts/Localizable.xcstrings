@@ -100,6 +100,9 @@
     "Applications" : {
 
     },
+    "Applies after Apply. Position the Dock at the bottom of your preferred display first. Gentle mode nudges an idle pointer inward after a short pause. Strong mode guards incoming mouse movement immediately, preventing slow movement along the edge from activating the Dock. Hold the bypass key to reach an exact bottom border or deliberately move the Dock." : {
+
+    },
     "Apply" : {
 
     },
@@ -127,7 +130,13 @@
     "Bottom Right" : {
 
     },
+    "Bottom-edge sections connected to another display are never guarded, allowing slow crossings in either direction. Display positions refresh automatically and are checked every two seconds while active. Held mouse buttons, dragging, and a short period after button release bypass protection. Hold the bypass key when hovering over an exposed bottom resize border. The guard does not restore the Dock after wake or reconnection and suspends if the preferred display is disconnected." : {
+
+    },
     "Built-in" : {
+
+    },
+    "Built-in MacBook display" : {
 
     },
     "Bundle identifier" : {
@@ -149,6 +158,9 @@
 
     },
     "Check Again" : {
+
+    },
+    "Check Dock Guard" : {
 
     },
     "Check for Updates" : {
@@ -223,6 +235,12 @@
     "Default" : {
 
     },
+    "Disable Dock Guard" : {
+
+    },
+    "Disable Dock Guard Now" : {
+
+    },
     "Disable Green Button Panel" : {
 
     },
@@ -284,6 +302,9 @@
 
     },
     "Every custom layout must have a name." : {
+
+    },
+    "Experimental Dock guard" : {
 
     },
     "Experimental Space movement" : {
@@ -600,7 +621,16 @@
     "Platform limits" : {
 
     },
+    "Preferred display" : {
+
+    },
     "Press to record a global keyboard shortcut." : {
+
+    },
+    "Prevent accidental Dock movement" : {
+
+    },
+    "Protection strength" : {
 
     },
     "Quarters" : {
@@ -657,7 +687,13 @@
     "Right Two Thirds" : {
 
     },
+    "Runtime status" : {
+
+    },
     "Safety: the action waits for your physical mouse buttons and modifier keys to be released, refuses covered or interactive title-bar points, rejects native full-screen windows, releases every synthetic key and mouse button on failure, and restores the pointer. The result cannot be verified through a public API." : {
+
+    },
+    "Saved display (disconnected)" : {
 
     },
     "Saved layouts" : {
@@ -706,6 +742,9 @@
 
     },
     "Targets and previews are separate, nonactivating panels that always ignore mouse events. Window Layouts observes the pointer and applies a hovered layout only after the drag ends. Changes take effect after Apply." : {
+
+    },
+    "Temporarily bypass with" : {
 
     },
     "That application is already mapped." : {

@@ -8,6 +8,7 @@ struct GeneralSettingsView: View {
     @Binding var library: LayoutLibrary
     @ObservedObject var controller: WindowLayoutsController
     @ObservedObject var launchAtLoginManager: LaunchAtLoginManager
+    @ObservedObject var dockGuardController: DockGuardController
 
     var body: some View {
         Form {
@@ -214,6 +215,45 @@ struct GeneralSettingsView: View {
                     "Control-click or right-click the Dock icon to apply layouts to the last active third-party app. A normal click retains the standard macOS app-activation behavior. The menu-bar item remains available at all times. Changes take effect after Apply."
                 )
                 .foregroundStyle(.secondary)
+            }
+
+            Section("Experimental Dock guard") {
+                Toggle("Prevent accidental Dock movement", isOn: $library.dockGuard.enabled)
+                Picker("Preferred display", selection: $library.dockGuard.preferredDisplayID) {
+                    Text("Built-in MacBook display").tag(Optional<String>.none)
+                    ForEach(dockGuardController.displays, id: \.persistentID) { display in
+                        Text(display.name).tag(Optional(display.persistentID))
+                    }
+                    if let selected = library.dockGuard.preferredDisplayID,
+                       !dockGuardController.displays.contains(where: { $0.persistentID == selected }) {
+                        Text("Saved display (disconnected)").tag(Optional(selected))
+                    }
+                }
+                .disabled(!library.dockGuard.enabled)
+                Picker("Protection strength", selection: $library.dockGuard.strength) {
+                    ForEach(DockGuardStrength.allCases, id: \.self) { strength in
+                        Text(strength.name).tag(strength)
+                    }
+                }
+                .disabled(!library.dockGuard.enabled)
+                Picker("Temporarily bypass with", selection: $library.dockGuard.bypassModifier) {
+                    ForEach(DockGuardBypassModifier.allCases, id: \.self) { modifier in
+                        Text(modifier.name).tag(modifier)
+                    }
+                }
+                .disabled(!library.dockGuard.enabled)
+                LabeledContent("Runtime status") { Text(dockGuardController.status) }
+                HStack {
+                    Button("Check Dock Guard") { dockGuardController.refresh() }
+                    Button("Disable Dock Guard Now") {
+                        library.dockGuard.enabled = false
+                        dockGuardController.disableImmediately()
+                    }
+                }
+                Text("Applies after Apply. Position the Dock at the bottom of your preferred display first. Gentle mode nudges an idle pointer inward after a short pause. Strong mode guards incoming mouse movement immediately, preventing slow movement along the edge from activating the Dock. Hold the bypass key to reach an exact bottom border or deliberately move the Dock.")
+                    .foregroundStyle(.secondary)
+                Text("Bottom-edge sections connected to another display are never guarded, allowing slow crossings in either direction. Display positions refresh automatically and are checked every two seconds while active. Held mouse buttons, dragging, and a short period after button release bypass protection. Hold the bypass key when hovering over an exposed bottom resize border. The guard does not restore the Dock after wake or reconnection and suspends if the preferred display is disconnected.")
+                    .foregroundStyle(.secondary)
             }
 
             Section("Overlay safety") {
