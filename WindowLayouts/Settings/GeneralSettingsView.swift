@@ -256,6 +256,25 @@ struct GeneralSettingsView: View {
                     .foregroundStyle(.secondary)
             }
 
+            Section("Experimental menu bar reveal") {
+                Toggle("Help reveal the menu bar on any display",
+                       isOn: $library.menuBarReveal.enabled)
+                if library.menuBarReveal.enabled {
+                    Stepper(
+                        "Activation distance: \(library.menuBarReveal.activationDistance) points",
+                        value: $library.menuBarReveal.activationDistance,
+                        in: MenuBarRevealPreferences.activationDistances
+                    )
+                    Stepper(
+                        "Keep visible after leaving: \(library.menuBarReveal.hideDelaySeconds) s",
+                        value: $library.menuBarReveal.hideDelaySeconds,
+                        in: MenuBarRevealPreferences.hideDelays
+                    )
+                    Text("Pause near the top of a display to show its menu bar when macOS makes the Reveal Menu Bar icon available there. The helper holds one bar at a time. Keep hovering on a second display to reveal it after the first hold ends.")
+                        .foregroundStyle(.secondary)
+                }
+            }
+
             Section("Overlay safety") {
                 Text(
                     "The green-button panel is compact and accepts input only while visibly open. Every drag-target and preview panel always ignores mouse events. The menu-bar item is always the emergency disable path."

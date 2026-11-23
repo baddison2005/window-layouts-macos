@@ -75,6 +75,12 @@ struct LayoutMenuView: View {
             controller.dockGuardController.disableImmediately()
         }
 
+        if settingsStore.library.menuBarReveal.enabled {
+            Button("Disable Menu Bar Reveal") {
+                controller.menuBarRevealController.disableImmediately()
+            }
+        }
+
         SettingsLink {
             Text("Configure Window Layouts Experimental…")
         }

@@ -83,6 +83,17 @@ final class LaunchAtLoginManager: ObservableObject {
     private var lastDesiredValue: Bool?
 
     convenience init(settingsStore: SettingsStore) {
+        if Bundle.main.bundleIdentifier == AppUpdateProduct.experimentalDebugBundleIdentifier {
+            // The development build shares the release's layout library.
+            // A saved launch preference must not register a second copy.
+            self.init(settingsStore: settingsStore, client: LaunchAtLoginClient(
+                status: { .notFound },
+                register: {},
+                unregister: {},
+                openSystemSettings: SMAppService.openSystemSettingsLoginItems
+            ))
+            return
+        }
         self.init(settingsStore: settingsStore, client: .live)
     }
 

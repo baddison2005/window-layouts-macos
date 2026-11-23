@@ -70,6 +70,9 @@
     "Accessibility access is required." : {
 
     },
+    "Activation distance: %lld points" : {
+
+    },
     "Add" : {
 
     },
@@ -244,6 +247,9 @@
     "Disable Green Button Panel" : {
 
     },
+    "Disable Menu Bar Reveal" : {
+
+    },
     "Disable Optional Overlays" : {
 
     },
@@ -305,6 +311,9 @@
 
     },
     "Experimental Dock guard" : {
+
+    },
+    "Experimental menu bar reveal" : {
 
     },
     "Experimental Space movement" : {
@@ -390,6 +399,9 @@
     "Halves" : {
 
     },
+    "Help reveal the menu bar on any display" : {
+
+    },
     "Horizontal Halves" : {
 
     },
@@ -415,6 +427,9 @@
 
     },
     "Install Window Layouts Experimental %@?" : {
+
+    },
+    "Keep visible after leaving: %lld s" : {
 
     },
     "Launch at login" : {
@@ -615,6 +630,9 @@
     "Panel size" : {
 
     },
+    "Pause near the top of a display to show its menu bar when macOS makes the Reveal Menu Bar icon available there. The helper holds one bar at a time. Keep hovering on a second display to reveal it after the first hold ends." : {
+
+    },
     "Permission to post input events is required." : {
 
     },
@@ -676,6 +694,9 @@
 
     },
     "Retry Saved Shortcuts" : {
+
+    },
+    "Reveal Menu Bar" : {
 
     },
     "Right Half" : {

@@ -325,15 +325,15 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 9006;
+				CURRENT_PROJECT_VERSION = 9007;
 				DEVELOPMENT_TEAM = SRNLN9U724;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = NO;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleName = "Window Layouts Experimental";
+				INFOPLIST_KEY_CFBundleName = "Window Layouts Experimental Debug";
 				INFOPLIST_KEY_LSUIElement = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "Window Layouts Experimental";
+				INFOPLIST_KEY_CFBundleDisplayName = "Window Layouts Experimental Debug";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Window Layouts contributors. GPL-3.0-or-later.";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -341,10 +341,10 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.6;
-				MARKETING_VERSION = 1.5.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.astrobrett.WindowLayouts.Experimental;
+				MARKETING_VERSION = 1.6.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.astrobrett.WindowLayouts.Experimental.Debug;
 				PRODUCT_MODULE_NAME = WindowLayouts;
-				PRODUCT_NAME = "Window Layouts Experimental";
+				PRODUCT_NAME = "Window Layouts Experimental Debug";
 				REGISTER_APP_GROUPS = NO;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -362,7 +362,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 9006;
+				CURRENT_PROJECT_VERSION = 9007;
 				DEVELOPMENT_TEAM = SRNLN9U724;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -379,7 +379,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.6;
-				MARKETING_VERSION = 1.5.0;
+				MARKETING_VERSION = 1.6.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.astrobrett.WindowLayouts.Experimental;
 				PRODUCT_MODULE_NAME = WindowLayouts;
 				PRODUCT_NAME = "Window Layouts Experimental";
@@ -400,11 +400,11 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 9006;
+				CURRENT_PROJECT_VERSION = 9007;
 				DEVELOPMENT_TEAM = SRNLN9U724;
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.6;
-				MARKETING_VERSION = 1.5.0;
+				MARKETING_VERSION = 1.6.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.astrobrett.WindowLayouts.ExperimentalTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -413,7 +413,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Window Layouts Experimental.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Window Layouts Experimental";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Window Layouts Experimental Debug.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Window Layouts Experimental Debug";
 			};
 			name = Debug;
 		};
@@ -424,11 +424,11 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 9006;
+				CURRENT_PROJECT_VERSION = 9007;
 				DEVELOPMENT_TEAM = SRNLN9U724;
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.6;
-				MARKETING_VERSION = 1.5.0;
+				MARKETING_VERSION = 1.6.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.astrobrett.WindowLayouts.ExperimentalTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";

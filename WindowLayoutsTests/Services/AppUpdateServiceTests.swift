@@ -95,6 +95,18 @@ struct AppUpdateServiceTests {
         ))
     }
 
+    @Test func debugIdentityUsesExperimentalChannelWithoutBeingAnInstallTarget() {
+        let product = AppUpdateProduct.current(
+            bundleIdentifier: "com.astrobrett.WindowLayouts.Experimental.Debug"
+        )
+        #expect(product == .experimental)
+        #expect(product.bundleIdentifier == "com.astrobrett.WindowLayouts.Experimental")
+        #expect(!AppUpdateInstaller.supportsAutomaticInstallation(
+            at: URL(fileURLWithPath: "/Applications/Window Layouts Experimental Debug.app"),
+            product: product
+        ))
+    }
+
     @Test func stableAndExperimentalChannelsRemainSeparate() throws {
         let experimental = makeRelease(
             version: "v1.4.0-experimental",

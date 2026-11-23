@@ -10,16 +10,20 @@ final class WindowLayoutsController: ObservableObject {
     @Published private(set) var hasAccessibilityAccess: Bool
     @Published private(set) var hasPostEventAccess: Bool
     @Published private(set) var monitorCount: Int
-    @Published private(set) var isPerformingAction = false
+    @Published private(set) var isPerformingAction = false {
+        didSet { menuBarRevealController.isWindowActionRunning = isPerformingAction }
+    }
     @Published private(set) var statusMessage: String?
 
     private let permissionService: AccessibilityPermissionService
     let windowService: WindowAccessibilityService
     let dockGuardController: DockGuardController
+    let menuBarRevealController: MenuBarRevealController
     private let spaceMovementService: SpaceMovementService
     private let settingsStore: SettingsStore
 
     init(settingsStore: SettingsStore) {
+        self.menuBarRevealController = MenuBarRevealController(settingsStore: settingsStore)
         self.dockGuardController = DockGuardController(settingsStore: settingsStore)
         let permissionService = AccessibilityPermissionService()
         self.permissionService = permissionService
@@ -40,6 +44,7 @@ final class WindowLayoutsController: ObservableObject {
     ) {
         self.permissionService = permissionService
         self.windowService = windowService
+        self.menuBarRevealController = MenuBarRevealController(settingsStore: settingsStore)
         self.dockGuardController = DockGuardController(settingsStore: settingsStore)
         self.spaceMovementService = spaceMovementService ?? SpaceMovementService()
         self.settingsStore = settingsStore

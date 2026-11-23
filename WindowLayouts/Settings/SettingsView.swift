@@ -116,6 +116,9 @@ struct SettingsView: View {
             // An emergency menu action must also disarm an open Settings draft.
             if !enabled { draft.library.dockGuard.enabled = false }
         }
+        .onChange(of: settingsStore.library.menuBarReveal.enabled) { _, enabled in
+            if !enabled { draft.library.menuBarReveal.enabled = false }
+        }
     }
 
     private func applyChanges() {

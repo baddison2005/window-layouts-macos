@@ -234,6 +234,7 @@ nonisolated struct LayoutLibrary: Codable, Equatable, Sendable {
     var missionControlSpaceShortcutsConfirmed: Bool
     var applicationWindowMappings: [ApplicationWindowMapping]
     var dockGuard: DockGuardPreferences
+    var menuBarReveal: MenuBarRevealPreferences
 
     init(
         schemaVersion: Int = Self.currentSchemaVersion,
@@ -253,7 +254,8 @@ nonisolated struct LayoutLibrary: Codable, Equatable, Sendable {
         experimentalSpaceMovementEnabled: Bool = false,
         missionControlSpaceShortcutsConfirmed: Bool = false,
         applicationWindowMappings: [ApplicationWindowMapping] = [],
-        dockGuard: DockGuardPreferences = DockGuardPreferences()
+        dockGuard: DockGuardPreferences = DockGuardPreferences(),
+        menuBarReveal: MenuBarRevealPreferences = MenuBarRevealPreferences()
     ) {
         self.schemaVersion = schemaVersion
         self.customLayouts = customLayouts
@@ -273,6 +275,7 @@ nonisolated struct LayoutLibrary: Codable, Equatable, Sendable {
         self.missionControlSpaceShortcutsConfirmed = missionControlSpaceShortcutsConfirmed
         self.applicationWindowMappings = applicationWindowMappings
         self.dockGuard = dockGuard
+        self.menuBarReveal = menuBarReveal
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -294,6 +297,7 @@ nonisolated struct LayoutLibrary: Codable, Equatable, Sendable {
         case missionControlSpaceShortcutsConfirmed
         case applicationWindowMappings
         case dockGuard
+        case menuBarReveal
     }
 
     init(from decoder: Decoder) throws {
@@ -366,6 +370,9 @@ nonisolated struct LayoutLibrary: Codable, Equatable, Sendable {
         dockGuard = try container.decodeIfPresent(
             DockGuardPreferences.self, forKey: .dockGuard
         ) ?? DockGuardPreferences()
+        menuBarReveal = try container.decodeIfPresent(
+            MenuBarRevealPreferences.self, forKey: .menuBarReveal
+        ) ?? MenuBarRevealPreferences()
     }
 
     var orderedMenuGroups: [MenuGroupIdentifier] {
@@ -411,6 +418,16 @@ nonisolated struct LayoutLibrary: Codable, Equatable, Sendable {
 
         var result = self
         result.schemaVersion = Self.currentSchemaVersion
+        let revealDistances = MenuBarRevealPreferences.activationDistances
+        result.menuBarReveal.activationDistance = min(
+            revealDistances.upperBound,
+            max(revealDistances.lowerBound, result.menuBarReveal.activationDistance)
+        )
+        let revealDelays = MenuBarRevealPreferences.hideDelays
+        result.menuBarReveal.hideDelaySeconds = min(
+            revealDelays.upperBound,
+            max(revealDelays.lowerBound, result.menuBarReveal.hideDelaySeconds)
+        )
         for index in result.customGroups.indices {
             let name = result.customGroups[index].name
                 .trimmingCharacters(in: .whitespacesAndNewlines)

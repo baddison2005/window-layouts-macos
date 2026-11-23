@@ -28,6 +28,7 @@ final class DockIntegrationController: ObservableObject {
         case configure
         case disableOptionalOverlays
         case disableDockGuard
+        case disableMenuBarReveal
     }
 
     private let settingsStore: SettingsStore
@@ -125,6 +126,13 @@ final class DockIntegrationController: ObservableObject {
             command: .disableDockGuard,
             enabled: true
         ))
+        if settingsStore.library.menuBarReveal.enabled {
+            menu.addItem(commandItem(
+                title: String(localized: "Disable Menu Bar Reveal"),
+                command: .disableMenuBarReveal,
+                enabled: true
+            ))
+        }
         return menu
     }
 
@@ -407,6 +415,8 @@ final class DockIntegrationController: ObservableObject {
             windowController.disableOptionalOverlays()
         case .disableDockGuard:
             windowController.dockGuardController.disableImmediately()
+        case .disableMenuBarReveal:
+            windowController.menuBarRevealController.disableImmediately()
         }
     }
 }

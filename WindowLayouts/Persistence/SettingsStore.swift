@@ -47,6 +47,17 @@ final class SettingsStore: ObservableObject {
         }
     }
 
+    func disableMenuBarReveal() {
+        var disabled = library
+        disabled.menuBarReveal.enabled = false
+        library = disabled
+        do {
+            try persistence.save(disabled)
+        } catch {
+            AppDiagnostics.persistence.error("Menu bar reveal disable could not be saved.")
+        }
+    }
+
     /// Emergency, best-effort runtime shutdown. Publish the disabled state even
     /// if persistence fails so an optional panel can never trap input.
     @discardableResult

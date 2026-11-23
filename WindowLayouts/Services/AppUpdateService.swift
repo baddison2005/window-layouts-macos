@@ -48,8 +48,15 @@ nonisolated enum AppUpdateProduct: Equatable, Sendable {
     case stable
     case experimental
 
+    static let experimentalDebugBundleIdentifier = "com.astrobrett.WindowLayouts.Experimental.Debug"
+
     static func current(bundleIdentifier: String? = Bundle.main.bundleIdentifier) -> Self {
-        bundleIdentifier == "com.astrobrett.WindowLayouts.Experimental" ? .experimental : .stable
+        switch bundleIdentifier {
+        case Self.experimental.bundleIdentifier, Self.experimentalDebugBundleIdentifier:
+            .experimental
+        default:
+            .stable
+        }
     }
 
     var tagSuffix: String {

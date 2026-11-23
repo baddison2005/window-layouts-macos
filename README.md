@@ -10,8 +10,8 @@
 Window Layouts Experimental is a native macOS utility for arranging application
 windows. It includes the stable layout, display-transfer, fill-display,
 green-button panel, drag-target, Dock-menu, and global-shortcut features, plus
-opt-in Space movement and a Dock guard that helps prevent accidental migration
-to another display while preserving crossings between connected displays.
+opt-in Space movement, a Dock guard that helps prevent accidental migration
+between displays, and a menu bar reveal helper with an adjustable hide delay.
 
 The app uses SwiftUI, AppKit, the public Accessibility API, and public Quartz
 event APIs. It has no third-party dependencies, telemetry, or analytics. It does
@@ -160,6 +160,37 @@ Choose **Check Dock Guard** after correcting a permission or Dock-position
 issue. This is best-effort prevention, not a direct macOS Dock lock: it does
 not automatically move the Dock back after wake or reconnection, and behaviour
 must be tested with your display arrangement. It creates no overlay windows.
+
+## Experimental Menu Bar Reveal
+
+New in **v1.6.0**. Menu Bar Reveal is off by default.
+
+If you use macOS menu bar auto-hide, enable **Help reveal the menu bar on any
+display** under **General → Experimental menu bar reveal**, then click
+**Apply**. Pause near the top of a display for a quarter-second. The same
+activation distance applies to every display and can be set from 4 to 50
+logical points.
+
+**Keep visible after leaving** sets how long to hold the bar after the pointer
+leaves both the menu bar and the activation zone on that display. The default
+is 3 seconds, with a range of 0 to 10 seconds. Returning before the delay ends
+keeps the bar open. If you pause near the top of another screen during the
+countdown, the helper can open that bar once the first hold ends and while
+you are still hovering. Click **Reveal Menu Bar** to show or release it manually.
+Disable the helper from the Window Layouts menu or the Dock menu.
+
+The **Reveal Menu Bar** icon anchors an invisible, click-through popover.
+macOS controls which display hosts the icon. The helper holds one bar at a
+time and can miss a reveal if the icon is unavailable on the hovered display.
+Changing the active display or using a native menu can end a hold early.
+A reveal handled entirely by macOS follows the system's hide timing. On
+some stacked displays, the native top-edge reveal can also miss after using
+a menu, even with Window Layouts closed.
+
+The helper leaves the pointer in place and uses the existing macOS auto-hide
+setting. If the popover fails to attach or macOS dismisses it during a hover,
+the helper can retry once. The status item approach is inspired by
+[Menubar Reveal](https://github.com/srobinson/menubar-reveal).
 
 ## Portable custom layouts
 
